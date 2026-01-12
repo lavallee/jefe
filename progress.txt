@@ -1,0 +1,68 @@
+# Station Chief - Development Progress
+
+## Session 2 (2026-01-12)
+
+### Task: sc-002 - Configure development tooling
+
+Successfully configured the complete development tooling infrastructure for the project.
+
+#### Implementation Summary
+
+1. **ruff.toml** - Created configuration file for linting and formatting
+   - Line length: 100 characters
+   - Target Python version: 3.11
+   - Selected rules: E, W, F, I, C, B, UP, ARG, SIM, RUF
+   - Configured isort integration for import sorting
+   - Added flake8-bugbear FastAPI immutable calls configuration
+
+2. **pyproject.toml** - Enhanced mypy configuration
+   - Added strict mode settings: disallow_any_generics, disallow_untyped_calls
+   - Added no_implicit_optional and warn_unused_ignores
+   - Module overrides for alembic and gitpython (missing imports)
+
+3. **conftest.py** - Pytest configuration
+   - Added pytest markers for slow and integration tests
+   - Configured async test support (asyncio_mode = "auto" in pyproject.toml)
+
+4. **tests/test_placeholder.py** - Sample test file
+   - Tests package imports
+   - Tests version attribute existence
+   - Verifies test infrastructure is working
+
+5. **Makefile** - Development commands
+   - `make lint` - Run ruff linting checks
+   - `make format` - Format code with ruff
+   - `make typecheck` - Run mypy type checking
+   - `make test` - Run pytest with coverage
+   - `make install` - Install project with dev dependencies
+   - `make dev` - Run lint, typecheck, and test
+   - `make clean` - Remove build artifacts and cache
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Linting: ruff found no issues in 8 files
+- ✓ Type checking: mypy found no issues in 6 source files
+- ✓ Formatting: All 8 files formatted correctly
+- ✓ Tests: 2 tests passed with 100% code coverage
+
+#### Key Learnings
+
+- ruff.toml structure: Top-level settings come before [sections]
+- ruff.toml [format] section has limited options (use top-level line-length instead)
+- Mypy needs module overrides for untyped third-party packages (alembic, gitpython)
+- pytest async mode "auto" is configured in pyproject.toml, not conftest.py
+- Project already had partial development setup in pyproject.toml (pytest.ini options, tool configs)
+
+#### Files Created/Modified
+
+Created:
+- ruff.toml
+- conftest.py
+- tests/test_placeholder.py
+- Makefile
+
+Modified:
+- pyproject.toml (enhanced mypy configuration)
+
+All tools are now ready for development. The project has a solid foundation for code quality checks.
