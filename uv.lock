@@ -1083,7 +1083,7 @@ wheels = [
 ]
 
 [[package]]
-name = "station-chief"
+name = "jefe"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -1137,7 +1137,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.8" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
-    { name = "typer", extras = ["all"], specifier = ">=0.9.0" },
+    { name = "typer", specifier = ">=0.9.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
 ]
 
