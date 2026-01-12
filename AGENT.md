@@ -31,6 +31,27 @@ source .venv/bin/activate
 
 ## Running the Project
 
+### Local Development (with Docker)
+
+```bash
+# Start the development server in Docker
+make docker-up
+
+# Stop the server
+make docker-down
+
+# View logs
+make docker-logs
+
+# Restart the server
+make docker-restart
+
+# Access the API at http://localhost:8000
+# API key is displayed on first startup
+```
+
+### Local Development (native)
+
 ```bash
 # Development server (API) - using factory pattern
 uvicorn station_chief.server.app:create_app --factory --reload
@@ -44,6 +65,17 @@ sc --help
 sc config show
 sc config set server_url http://localhost:8000
 ```
+
+### Docker Setup
+
+The project includes Docker support for containerized development:
+
+- **Dockerfile**: Python 3.11 image with dependencies
+- **docker-compose.yml**: Single-service setup with hot reload and database persistence
+- **docker-compose.override.yml.example**: Template for local customization
+- **.dockerignore**: Optimizes build context
+
+Hot reload is enabled - source code changes are reflected without rebuild.
 
 ## Feedback Loops
 
