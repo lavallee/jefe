@@ -722,3 +722,11 @@ All checks pass successfully:
 - Updated XDG config directory path to `~/.config/jefe` and aligned CLI tests.
 - Switched API key storage path to `~/.jefe/api_key`.
 - Feedback loops: `mypy src/jefe`, `ruff check src/jefe`, `pytest`.
+
+## Session 14 (2026-01-12)
+
+### Task: sc-15m - Update CI/CD workflows
+
+- Updated CI workflow lint/typecheck paths to `src/jefe`.
+- Verified Makefile already targets `src/jefe` for linting and type checks.
+- Feedback loops: `mypy src/jefe`, `ruff check src/jefe`, `pytest`.
