@@ -17,11 +17,25 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Handle application startup and shutdown events.
 
-    On startup: Initialize database connections.
+    On startup: Initialize database connections and ensure API key exists.
     On shutdown: Close database connections.
     """
     # Startup
     await init_db()
+
+    # Ensure API key exists
+    from station_chief.server.auth import ensure_api_key_exists
+
+    new_key = ensure_api_key_exists()
+    if new_key is not None:
+        print("\n" + "=" * 70)
+        print("🔑 NEW API KEY GENERATED")
+        print("=" * 70)
+        print(f"\nYour API key: {new_key}")
+        print("\nSave this key securely - it won't be shown again!")
+        print("Use it in the X-API-Key header for all API requests.")
+        print("=" * 70 + "\n")
+
     yield
     # Shutdown
     await close_db()
