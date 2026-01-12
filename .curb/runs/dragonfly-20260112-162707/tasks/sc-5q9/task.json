@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-5q9",
+  "title": "Update test file imports",
+  "priority": "P2",
+  "status": "completed",
+  "started_at": "2026-01-12T22:01:50Z",
+  "iterations": 1,
+  "completed_at": "2026-01-12T22:11:01Z",
+  "exit_code": 0
+}
