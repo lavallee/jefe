@@ -32,13 +32,15 @@ source .venv/bin/activate
 ## Running the Project
 
 ```bash
-# Development server (API)
-# uvicorn station_chief.server.app:app --reload
+# Development server (API) - using factory pattern
+uvicorn station_chief.server.app:create_app --factory --reload
+
+# Or using module entry point
+python -m station_chief.server
 
 # CLI
 # python -m station_chief.cli
-
-# Note: Implementation of entry points pending
+# Note: CLI implementation pending
 ```
 
 ## Feedback Loops

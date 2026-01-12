@@ -173,3 +173,100 @@ Modified:
 ✅ Base repository CRUD methods work
 
 The database layer is now fully functional and ready for model development.
+
+## Session 4 (2026-01-12)
+
+### Task: sc-004 - Create FastAPI server skeleton
+
+Successfully implemented the FastAPI server with app factory pattern, health endpoint, and comprehensive test coverage.
+
+#### Implementation Summary
+
+1. **FastAPI Application (src/station_chief/server/app.py)**
+   - create_app() factory function for testability
+   - Lifespan context manager for startup/shutdown (database init/cleanup)
+   - CORS middleware configured (allow all for dev, configurable for prod)
+   - Global exception handlers for consistent JSON error responses
+   - RequestValidationError handler (422 with detailed errors)
+   - General Exception handler (500 with error message)
+
+2. **API Router Structure (src/station_chief/server/api/)**
+   - Main api_router in __init__.py
+   - Health check endpoint (/health) returns status and version
+   - Modular router design for easy addition of new endpoints
+   - Tags configured for OpenAPI grouping
+
+3. **Response Schemas (src/station_chief/server/schemas/common.py)**
+   - HealthResponse: status and version fields
+   - ErrorResponse: error, message, and optional details
+   - MessageResponse: simple message field
+   - All schemas use Pydantic with Field descriptions
+
+4. **Module Entry Point (src/station_chief/server/__main__.py)**
+   - Enables running server with `python -m station_chief.server`
+   - Uses uvicorn with factory mode
+   - Configured for development (reload=True, host=0.0.0.0, port=8000)
+
+5. **Tests (tests/server/test_health.py)**
+   - TestClient fixture for FastAPI testing
+   - Health endpoint structure and value tests
+   - OpenAPI documentation availability tests (/docs, /openapi.json)
+   - All 5 new tests pass
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 17 source files
+- ✓ Linting: ruff found no issues (fixed unused argument warnings with _prefix)
+- ✓ Tests: 12 tests passed (5 new server tests + 7 existing)
+- ✓ Coverage: 86% overall coverage
+
+#### Key Learnings
+
+1. **FastAPI Factory Pattern**
+   - Use factory function (create_app) instead of global app instance
+   - Enables easier testing and multiple app configurations
+   - Lifespan context manager replaces deprecated startup/shutdown events
+   - Must use --factory flag with uvicorn
+
+2. **Unused Arguments in FastAPI**
+   - Exception handlers require request parameter even if unused
+   - Lifespan requires app parameter even if unused
+   - Prefix with underscore (_request, _app) to satisfy ruff ARG001 rule
+   - These parameters are required by FastAPI's signature
+
+3. **Testing FastAPI Apps**
+   - TestClient from fastapi.testclient for synchronous testing
+   - Lifespan events run automatically with TestClient
+   - Can test both API endpoints and OpenAPI documentation
+   - No need for async test client for simple endpoints
+
+4. **OpenAPI Configuration**
+   - Configure docs_url, redoc_url, openapi_url in FastAPI constructor
+   - Version automatically pulled from package __version__
+   - Tags on routers organize endpoints in documentation
+   - Exception handlers show up in OpenAPI schema
+
+#### Files Created
+
+Server:
+- src/station_chief/server/app.py
+- src/station_chief/server/__main__.py
+- src/station_chief/server/api/__init__.py
+- src/station_chief/server/api/health.py
+- src/station_chief/server/schemas/__init__.py
+- src/station_chief/server/schemas/common.py
+
+Tests:
+- tests/server/__init__.py
+- tests/server/test_health.py
+
+#### Acceptance Criteria Verification
+
+✅ `uvicorn station_chief.server.app:create_app --factory` starts server
+✅ `/health` returns 200 with version info
+✅ `/docs` shows OpenAPI documentation
+✅ Exception handler returns consistent JSON errors
+✅ Tests pass for health endpoint
+
+The FastAPI server skeleton is now complete and ready for adding domain-specific routes.
