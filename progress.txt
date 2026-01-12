@@ -748,3 +748,10 @@ Updated default SQLite database filename to `jefe.db` for app and Alembic defaul
 - Type checking: `mypy src/jefe`
 - Linting: `ruff check src/jefe`
 - Tests: `pytest`
+
+## Session 16 (2026-01-12)
+
+### Task: sc-m9o - Update alembic env.py imports
+
+- Verified `alembic/env.py` already imports `jefe.data.models.base` and needed no code changes.
+- Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
