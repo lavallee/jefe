@@ -270,3 +270,100 @@ Tests:
 ✅ Tests pass for health endpoint
 
 The FastAPI server skeleton is now complete and ready for adding domain-specific routes.
+
+## Session 5 (2026-01-12)
+
+### Task: sc-005 - Implement API key auth middleware
+
+Successfully implemented API key authentication middleware with file-based secure storage and comprehensive testing.
+
+#### Implementation Summary
+
+1. **Authentication Module (src/station_chief/server/auth.py)**
+   - API key generation using secrets.token_urlsafe(32)
+   - SHA-256 hashing for secure storage
+   - File-based storage at ~/.station_chief/api_key with 0o600 permissions
+   - verify_api_key() with constant-time comparison (secrets.compare_digest)
+   - require_api_key() FastAPI dependency for protected endpoints
+   - APIKeyHeader configuration with X-API-Key header
+   - ensure_api_key_exists() generates key on first run
+
+2. **Auth API Endpoint (src/station_chief/server/api/auth.py)**
+   - /api/auth/verify endpoint to test key validity
+   - Returns MessageResponse on success
+   - Protected by require_api_key dependency
+   - Automatically returns 401 for missing/invalid keys
+
+3. **App Integration (src/station_chief/server/app.py)**
+   - Lifespan event calls ensure_api_key_exists() on startup
+   - Displays generated key with clear formatting on first run
+   - Warning message to save key securely
+   - No auth required for /health, /docs, /openapi.json endpoints
+
+4. **Tests (tests/server/test_auth.py)**
+   - 15 comprehensive auth tests
+   - Mocked API key storage using tmp_path fixture
+   - Tests for key generation, storage, verification
+   - Tests for auth endpoint (valid, invalid, missing keys)
+   - Tests for unauthenticated endpoints (health, docs)
+   - File permissions verification test
+   - All tests pass with 98% coverage of auth.py
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 19 source files
+- ✓ Linting: ruff found no issues
+- ✓ Tests: 27 tests passed (15 new auth tests + 12 existing)
+- ✓ Coverage: 85% overall coverage (98% auth.py coverage)
+
+#### Key Learnings
+
+1. **API Key Security Best Practices**
+   - Never store plain API keys - always hash with SHA-256
+   - Use secrets.token_urlsafe() for cryptographically secure random keys
+   - Use secrets.compare_digest() for constant-time comparison (timing attack prevention)
+   - Set file permissions to 0o600 (owner read/write only) for key files
+   - Display key only once on generation - never log or expose hashed keys
+
+2. **FastAPI Security Dependencies**
+   - APIKeyHeader auto_error=False allows custom error messages
+   - Security() function creates dependency with OpenAPI security scheme
+   - Annotated[str, Security(...)] provides type hints and dependency injection
+   - Type alias (APIKey = Annotated[str, Depends(...)]) simplifies endpoint signatures
+
+3. **Testing Authentication**
+   - Mock file system paths using fixtures and patch()
+   - Create valid keys in fixtures for reusable test setup
+   - Test both authenticated and unauthenticated endpoints
+   - Verify security properties (file permissions, key uniqueness)
+   - Use TestClient.get() with headers parameter for API key testing
+
+4. **Lifespan Integration**
+   - Startup events are ideal for one-time initialization (API key generation)
+   - Print statements in lifespan events show in server logs
+   - Return value from ensure_api_key_exists() indicates if key was newly generated
+   - Clear user messaging important for security credentials
+
+#### Files Created
+
+Authentication:
+- src/station_chief/server/auth.py
+- src/station_chief/server/api/auth.py
+
+Tests:
+- tests/server/test_auth.py
+
+Modified:
+- src/station_chief/server/app.py (added lifespan API key generation)
+- src/station_chief/server/api/__init__.py (added auth router)
+
+#### Acceptance Criteria Verification
+
+✅ Requests without API key return 401
+✅ Requests with invalid key return 401
+✅ Requests with valid key succeed
+✅ Key is generated on first run and displayed
+✅ Health and docs endpoints work without auth
+
+The API authentication system is now fully functional and secure.
