@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
-from station_chief.cli.app import app
-from station_chief.cli.config import (
+from jefe.cli.app import app
+from jefe.cli.config import (
     get_config_dir,
     get_config_file,
     load_config,
@@ -47,17 +47,17 @@ def _save_test_config(temp_config_dir: Path, key: str, value: str) -> None:
 def mock_config_dir(temp_config_dir: Path) -> None:
     """Mock the config directory to use temp directory."""
     with (
-        patch("station_chief.cli.config.get_config_dir", return_value=temp_config_dir),
+        patch("jefe.cli.config.get_config_dir", return_value=temp_config_dir),
         patch(
-            "station_chief.cli.commands.config.get_config_file",
+            "jefe.cli.commands.config.get_config_file",
             return_value=temp_config_dir / "config.json",
         ),
         patch(
-            "station_chief.cli.commands.config.load_config",
+            "jefe.cli.commands.config.load_config",
             side_effect=lambda: _load_test_config(temp_config_dir),
         ),
         patch(
-            "station_chief.cli.commands.config.set_config_value",
+            "jefe.cli.commands.config.set_config_value",
             side_effect=lambda k, v: _save_test_config(temp_config_dir, k, v),
         ),
     ):
@@ -86,7 +86,7 @@ class TestConfigOperations:
 
     def test_load_config_empty_file(self, temp_config_dir: Path) -> None:
         """Test loading config when file doesn't exist."""
-        with patch("station_chief.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
+        with patch("jefe.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
             config = load_config()
             assert config == {}
 
@@ -94,21 +94,21 @@ class TestConfigOperations:
         """Test saving and loading configuration."""
         config_data = {"server_url": "http://localhost:8000", "api_key": "test123"}
 
-        with patch("station_chief.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
+        with patch("jefe.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
             save_config(config_data)
             loaded = load_config()
             assert loaded == config_data
 
     def test_set_config_value(self, temp_config_dir: Path) -> None:
         """Test setting a single config value."""
-        with patch("station_chief.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
+        with patch("jefe.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
             set_config_value("server_url", "http://localhost:8000")
             config = load_config()
             assert config["server_url"] == "http://localhost:8000"
 
     def test_set_config_value_preserves_existing(self, temp_config_dir: Path) -> None:
         """Test that setting a value preserves existing values."""
-        with patch("station_chief.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
+        with patch("jefe.cli.config.get_config_file", return_value=temp_config_dir / "config.json"):
             set_config_value("key1", "value1")
             set_config_value("key2", "value2")
             config = load_config()

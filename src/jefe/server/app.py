@@ -8,8 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from station_chief import __version__
-from station_chief.data.database import close_db, init_db
+from jefe import __version__
+from jefe.data.database import close_db, init_db
 
 
 @asynccontextmanager
@@ -24,7 +24,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
 
     # Ensure API key exists
-    from station_chief.server.auth import ensure_api_key_exists
+    from jefe.server.auth import ensure_api_key_exists
 
     new_key = ensure_api_key_exists()
     if new_key is not None:
@@ -95,7 +95,7 @@ def create_app() -> FastAPI:
         )
 
     # Import and register routers
-    from station_chief.server.api import api_router
+    from jefe.server.api import api_router
 
     app.include_router(api_router)
 

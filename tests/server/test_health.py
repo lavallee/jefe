@@ -3,8 +3,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from station_chief import __version__
-from station_chief.server.app import create_app
+from jefe import __version__
+from jefe.server.app import create_app
 
 
 @pytest.fixture

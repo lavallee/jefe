@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from station_chief.server.auth import APIKey
-from station_chief.server.schemas.common import MessageResponse
+from jefe.server.auth import APIKey
+from jefe.server.schemas.common import MessageResponse
 
 router = APIRouter()
 

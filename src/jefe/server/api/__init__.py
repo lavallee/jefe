@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from station_chief.server.api.auth import router as auth_router
-from station_chief.server.api.health import router as health_router
+from jefe.server.api.auth import router as auth_router
+from jefe.server.api.health import router as health_router
 
 # Main API router
 api_router = APIRouter()

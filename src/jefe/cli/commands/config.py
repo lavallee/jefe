@@ -4,7 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from station_chief.cli.config import (
+from jefe.cli.config import (
     get_config_file,
     load_config,
     set_config_value,

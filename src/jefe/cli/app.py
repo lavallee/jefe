@@ -3,8 +3,8 @@
 import typer
 from rich.console import Console
 
-from station_chief import __version__
-from station_chief.cli.commands.config import config_app
+from jefe import __version__
+from jefe.cli.commands.config import config_app
 
 app = typer.Typer(
     name="station-chief",

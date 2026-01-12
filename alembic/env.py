@@ -19,7 +19,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import the Base from models to get metadata
-from station_chief.data.models.base import Base
+from jefe.data.models.base import Base
 
 # Set target metadata for autogenerate support
 target_metadata = Base.metadata

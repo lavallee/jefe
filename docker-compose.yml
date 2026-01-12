@@ -18,7 +18,7 @@ services:
       - station_chief_data:/app/data
     command: >
       uvicorn
-      station_chief.server.app:create_app
+      jefe.server.app:create_app
       --factory
       --host 0.0.0.0
       --port 8000

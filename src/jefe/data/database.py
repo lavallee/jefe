@@ -72,7 +72,7 @@ async def init_db() -> None:
 
     This should be called on application startup if not using migrations.
     """
-    from station_chief.data.models.base import Base
+    from jefe.data.models.base import Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

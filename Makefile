@@ -22,13 +22,13 @@ help:
 	@echo ""
 
 lint:
-	ruff check src/station_chief tests
+	ruff check src/jefe tests
 
 format:
-	ruff format src/station_chief tests
+	ruff format src/jefe tests
 
 typecheck:
-	mypy src/station_chief
+	mypy src/jefe
 
 test:
 	pytest

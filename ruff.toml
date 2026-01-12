@@ -35,7 +35,7 @@ ignore = [
 ]
 
 [lint.isort]
-known-first-party = ["station_chief"]
+known-first-party = ["jefe"]
 
 [lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]

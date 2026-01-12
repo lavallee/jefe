@@ -6,8 +6,8 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from station_chief.server.app import create_app
-from station_chief.server.auth import (
+from jefe.server.app import create_app
+from jefe.server.auth import (
     ensure_api_key_exists,
     generate_api_key,
     load_api_key_hash,
@@ -26,7 +26,7 @@ def temp_api_key_dir(tmp_path: Path) -> Path:
 def mock_api_key_file(temp_api_key_dir: Path) -> Path:
     """Mock the API key file location to use a temporary directory."""
     key_file = temp_api_key_dir / "api_key"
-    with patch("station_chief.server.auth.get_api_key_file", return_value=key_file):
+    with patch("jefe.server.auth.get_api_key_file", return_value=key_file):
         yield key_file
 
 

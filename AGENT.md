@@ -54,10 +54,10 @@ make docker-restart
 
 ```bash
 # Development server (API) - using factory pattern
-uvicorn station_chief.server.app:create_app --factory --reload
+uvicorn jefe.server.app:create_app --factory --reload
 
 # Or using module entry point
-python -m station_chief.server
+python -m jefe.server
 
 # CLI (installed as 'sc' command)
 sc --version
@@ -83,17 +83,17 @@ Run these before committing:
 
 ```bash
 # Type checking
-mypy src/station_chief
+mypy src/jefe
 
 # Tests
 pytest
 
 # Linting
-ruff check src/station_chief
+ruff check src/jefe
 
 # Format (optional, ruff handles most formatting)
-black src/station_chief
-ruff format src/station_chief
+black src/jefe
+ruff format src/jefe
 ```
 
 ## Project Structure
@@ -110,12 +110,12 @@ ruff format src/station_chief
 ## Key Files
 
 - `pyproject.toml` - Project configuration, dependencies, tool settings
-- `src/station_chief/__init__.py` - Package entry point with version
-- `src/station_chief/server/` - FastAPI server and REST API implementation
-- `src/station_chief/cli/` - Command-line interface with Typer
-- `src/station_chief/web/` - Web interface templates and static files
-- `src/station_chief/adapters/` - Integration adapters (Git hosting platforms, etc.)
-- `src/station_chief/data/` - Data models, database schema, ORM definitions
+- `src/jefe/__init__.py` - Package entry point with version
+- `src/jefe/server/` - FastAPI server and REST API implementation
+- `src/jefe/cli/` - Command-line interface with Typer
+- `src/jefe/web/` - Web interface templates and static files
+- `src/jefe/adapters/` - Integration adapters (Git hosting platforms, etc.)
+- `src/jefe/data/` - Data models, database schema, ORM definitions
 - `README.md` - User-facing documentation
 
 ## Gotchas & Learnings
@@ -131,10 +131,10 @@ ruff format src/station_chief
 source .venv/bin/activate
 
 # Run all feedback loops
-mypy src/station_chief && ruff check src/station_chief && pytest
+mypy src/jefe && ruff check src/jefe && pytest
 
 # Test module import
-python -c "import station_chief; print(station_chief.__version__)"
+python -c "import jefe; print(jefe.__version__)"
 
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"

@@ -8,9 +8,9 @@ from sqlalchemy import String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from station_chief.data.database import get_engine
-from station_chief.data.models.base import BaseModel
-from station_chief.data.repositories.base import BaseRepository
+from jefe.data.database import get_engine
+from jefe.data.models.base import BaseModel
+from jefe.data.repositories.base import BaseRepository
 
 
 # Test model for repository operations

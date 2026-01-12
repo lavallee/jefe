@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from station_chief import __version__
-from station_chief.server.schemas.common import HealthResponse
+from jefe import __version__
+from jefe.server.schemas.common import HealthResponse
 
 router = APIRouter()
 

@@ -59,18 +59,18 @@ Repository = "https://github.com/yourusername/station-chief.git"
 Issues = "https://github.com/yourusername/station-chief/issues"
 
 [project.scripts]
-sc = "station_chief.cli.app:app"
+sc = "jefe.cli.app:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/station_chief"]
+packages = ["src/jefe"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "--cov=src/station_chief --cov-report=term-missing"
+addopts = "--cov=src/jefe --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["src/station_chief"]
+source = ["src/jefe"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -125,7 +125,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["station_chief"]
+known-first-party = ["jefe"]
 
 [tool.black]
 line-length = 100

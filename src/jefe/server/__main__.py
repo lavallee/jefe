@@ -6,7 +6,7 @@ import uvicorn
 def main() -> None:
     """Run the FastAPI server."""
     uvicorn.run(
-        "station_chief.server.app:create_app",
+        "jefe.server.app:create_app",
         factory=True,
         host="0.0.0.0",
         port=8000,

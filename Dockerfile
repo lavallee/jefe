@@ -27,4 +27,4 @@ RUN pip install --no-cache-dir -e .
 EXPOSE 8000
 
 # Run the development server
-CMD ["uvicorn", "station_chief.server.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "jefe.server.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

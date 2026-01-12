@@ -33,23 +33,23 @@ pip install -e ".[dev]"
 
 ```bash
 # Test import
-python -c "import station_chief; print(station_chief.__version__)"
+python -c "import jefe; print(jefe.__version__)"
 
 # Run tests
 pytest
 
 # Type checking
-mypy src/station_chief
+mypy src/jefe
 
 # Linting
-ruff check src/station_chief
+ruff check src/jefe
 ```
 
 ## Project Structure
 
 ```
 station-chief/
-├── src/station_chief/
+├── src/jefe/
 │   ├── server/          # API and server components
 │   ├── cli/             # Command-line interface
 │   ├── web/             # Web interface components
@@ -68,27 +68,27 @@ station-chief/
 pytest
 
 # With coverage
-pytest --cov=src/station_chief
+pytest --cov=src/jefe
 ```
 
 ### Type Checking
 
 ```bash
-mypy src/station_chief
+mypy src/jefe
 ```
 
 ### Code Quality
 
 ```bash
 # Linting
-ruff check src/station_chief
+ruff check src/jefe
 
 # Formatting
-black src/station_chief
-ruff check --fix src/station_chief
+black src/jefe
+ruff check --fix src/jefe
 
 # Organize imports
-isort src/station_chief
+isort src/jefe
 ```
 
 ## License
@@ -99,5 +99,5 @@ MIT License - See LICENSE file for details
 
 Contributions welcome! Please ensure:
 - All tests pass: `pytest`
-- Type checking passes: `mypy src/station_chief`
+- Type checking passes: `mypy src/jefe`
 - Code is formatted: `ruff format . && black .`
