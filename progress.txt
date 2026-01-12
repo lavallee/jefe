@@ -713,3 +713,12 @@ All checks pass successfully:
 - ✓ Type checking: mypy found no issues in 23 source files
 - ✓ Tests: 42 tests passed
 - ✓ Linting: ruff found no issues
+
+## Session 13 (2026-01-12)
+
+### Task: sc-4ms - Update CLI app name and config paths
+
+- Renamed CLI app display/name strings to Jefe in the Typer app.
+- Updated XDG config directory path to `~/.config/jefe` and aligned CLI tests.
+- Switched API key storage path to `~/.jefe/api_key`.
+- Feedback loops: `mypy src/jefe`, `ruff check src/jefe`, `pytest`.
