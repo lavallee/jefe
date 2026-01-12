@@ -1,0 +1,45 @@
+# Ruff configuration for Station Chief
+# This file defines linting and formatting rules for the project
+
+line-length = 100
+target-version = "py311"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+]
+
+[lint]
+# Extended selection of rules for code quality
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "C",      # flake8-comprehensions
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "RUF",    # ruff-specific rules
+]
+
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[lint.isort]
+known-first-party = ["station_chief"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
+[format]
+# Configuration for the code formatter
+skip-magic-trailing-comma = false
