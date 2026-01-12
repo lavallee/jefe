@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-xeh",
+  "title": "Rename Python package directory",
+  "priority": "P2",
+  "status": "completed",
+  "started_at": "2026-01-12T21:27:09Z",
+  "iterations": 1,
+  "completed_at": "2026-01-12T21:34:03Z",
+  "exit_code": 0
+}
