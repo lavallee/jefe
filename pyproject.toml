@@ -57,6 +57,9 @@ Documentation = "https://station-chief.readthedocs.io"
 Repository = "https://github.com/yourusername/station-chief.git"
 Issues = "https://github.com/yourusername/station-chief/issues"
 
+[project.scripts]
+sc = "station_chief.cli.app:app"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/station_chief"]
 

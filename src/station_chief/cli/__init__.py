@@ -1,3 +1,5 @@
 """CLI module - Command-line interface components."""
 
-__all__ = []
+from station_chief.cli.app import app
+
+__all__ = ["app"]
