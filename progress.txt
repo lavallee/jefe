@@ -66,3 +66,110 @@ Modified:
 - pyproject.toml (enhanced mypy configuration)
 
 All tools are now ready for development. The project has a solid foundation for code quality checks.
+
+## Session 3 (2026-01-12)
+
+### Task: sc-003 - Set up SQLAlchemy + Alembic
+
+Successfully implemented the async database layer with SQLAlchemy 2.0 and Alembic migrations.
+
+#### Implementation Summary
+
+1. **Dependencies**
+   - Added aiosqlite>=0.19.0 for async SQLite support
+   - SQLAlchemy 2.0 and Alembic already in dependencies
+
+2. **Database Module (src/station_chief/data/database.py)**
+   - get_engine() function for creating async engines
+   - AsyncSessionLocal session factory with proper configuration
+   - get_session() dependency for FastAPI/general use
+   - init_db() and close_db() lifecycle functions
+   - DATABASE_URL environment variable support (defaults to SQLite)
+
+3. **Models Module (src/station_chief/data/models/)**
+   - Base: DeclarativeBase with type annotation map for datetime
+   - TimestampMixin: created_at and updated_at columns
+   - IDMixin: integer primary key id column
+   - BaseModel: Abstract base combining all mixins with utility methods (to_dict, __repr__)
+
+4. **Alembic Configuration**
+   - Initialized with async support
+   - alembic.ini configured with SQLite default and ruff post-write hook
+   - env.py configured for async migrations with proper metadata import
+   - Initial empty migration created (8d3e28539be6)
+   - DATABASE_URL environment variable support
+
+5. **Repository Pattern (src/station_chief/data/repositories/)**
+   - BaseRepository with generic CRUD operations
+   - Type-safe with Generic[ModelType] bound to BaseModel
+   - Methods: create, get_by_id, get_all (with limit/offset), update, delete, count
+
+6. **Tests (tests/test_database.py)**
+   - TestDatabaseConnection: Engine creation and session tests
+   - TestDatabaseOperations: Table creation tests
+   - TestBaseRepository: Full CRUD cycle tests
+   - TestBaseModel: Utility method tests (to_dict, __repr__)
+   - Uses file-based SQLite for testing (tmp_path fixture)
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Tests: 7 tests passed (5 database + 2 placeholder)
+- ✓ Type checking: mypy found no issues in 11 source files
+- ✓ Linting: ruff found no issues
+- ✓ Coverage: 89% overall coverage
+
+#### Key Learnings
+
+1. **SQLite In-Memory Testing Issue**
+   - SQLite in-memory databases (:memory:) create separate databases per connection
+   - For async testing, must use file-based databases (tmp_path fixture)
+   - Each async session gets a new connection, so in-memory state isn't shared
+
+2. **SQLAlchemy 2.0 Type Hints**
+   - Use Mapped[type] for columns with mapped_column()
+   - ClassVar annotation required for class-level attributes (type_annotation_map)
+   - TypeVar bound to BaseModel enables type-safe repository operations
+
+3. **Alembic Async Configuration**
+   - Must import Base metadata in env.py before using it
+   - run_migrations_online() needs asyncio.run(run_async_migrations())
+   - async_engine_from_config() instead of engine_from_config()
+   - Post-write hooks for formatting migration files
+
+4. **Repository Pattern**
+   - Generic[ModelType] with bound=BaseModel allows reusable CRUD
+   - expire_on_commit=False prevents unnecessary refresh queries
+   - Type checker needs ModelType bound to class with id attribute
+
+#### Files Created
+
+Core Database:
+- src/station_chief/data/database.py
+- src/station_chief/data/models/__init__.py
+- src/station_chief/data/models/base.py
+- src/station_chief/data/repositories/__init__.py
+- src/station_chief/data/repositories/base.py
+
+Alembic:
+- alembic.ini
+- alembic/env.py
+- alembic/README
+- alembic/script.py.mako
+- alembic/versions/8d3e28539be6_initial_setup.py
+
+Tests:
+- tests/test_database.py
+
+Modified:
+- pyproject.toml (added aiosqlite dependency)
+
+#### Acceptance Criteria Verification
+
+✅ Database engine creates SQLite file (station_chief.db created)
+✅ `alembic upgrade head` runs successfully
+✅ `alembic revision --autogenerate` works
+✅ Session factory provides working sessions
+✅ Base repository CRUD methods work
+
+The database layer is now fully functional and ready for model development.
