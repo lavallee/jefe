@@ -38,9 +38,11 @@ uvicorn station_chief.server.app:create_app --factory --reload
 # Or using module entry point
 python -m station_chief.server
 
-# CLI
-# python -m station_chief.cli
-# Note: CLI implementation pending
+# CLI (installed as 'sc' command)
+sc --version
+sc --help
+sc config show
+sc config set server_url http://localhost:8000
 ```
 
 ## Feedback Loops

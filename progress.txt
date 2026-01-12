@@ -367,3 +367,125 @@ Modified:
 ✅ Health and docs endpoints work without auth
 
 The API authentication system is now fully functional and secure.
+## Session 6 (2026-01-12)
+
+### Task: sc-006 - Create Typer CLI skeleton
+
+Successfully implemented the Typer CLI application with configuration management, Rich output, and comprehensive testing.
+
+#### Implementation Summary
+
+1. **CLI Application (src/station_chief/cli/app.py)**
+   - Main Typer app with factory pattern
+   - --version/-v callback showing package version
+   - Rich Console for formatted output
+   - add_completion=False to disable shell completion generation
+   - Registered config subcommand
+   - Main callback for global options
+
+2. **Configuration Module (src/station_chief/cli/config.py)**
+   - XDG-compliant configuration storage (~/.config/station-chief/config.json)
+   - get_config_dir() creates directory with parents if needed
+   - get_config_file() returns path to config file
+   - load_config() returns dict or empty dict if file doesn't exist
+   - save_config() writes config with JSON pretty-printing (indent=2)
+   - get_config_value() and set_config_value() for single-key operations
+
+3. **Config Commands (src/station_chief/cli/commands/config.py)**
+   - config_app Typer sub-application
+   - config show: Displays configuration in Rich table with sorted keys
+   - config set: Updates configuration with feedback message
+   - Both commands show config file path for transparency
+   - Empty config shows helpful "No configuration found" message
+
+4. **Entry Point (pyproject.toml)**
+   - Added [project.scripts] section
+   - Entry point: sc = "station_chief.cli.app:app"
+   - CLI accessible via 'sc' command after pip install
+
+5. **Tests (tests/cli/test_config.py)**
+   - 15 comprehensive tests covering all functionality
+   - TestConfigDirectory: Directory creation and path validation
+   - TestConfigOperations: Load, save, set operations with persistence
+   - TestVersionCommand: --version and -v flags
+   - TestHelpCommand: --help output validation
+   - TestConfigShowCommand: Empty and populated config display
+   - TestConfigSetCommand: Single and multiple value setting
+   - Helper functions to avoid complex nested ternary expressions
+   - Proper fixture naming with underscore prefix for unused fixtures
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 23 source files
+- ✓ Linting: ruff found no issues in CLI code
+- ✓ Tests: 15 CLI tests passed with 94%+ coverage
+- ✓ Manual verification: All acceptance criteria met
+
+#### Key Learnings
+
+1. **Typer Application Structure**
+   - app.callback() decorator for main callback with global options
+   - version_callback with is_eager=True processes before other commands
+   - typer.Exit() cleanly exits after showing version
+   - add_typer() registers subcommands with custom names
+   - Rich Console integrates seamlessly with Typer for colored output
+
+2. **XDG Configuration Standards**
+   - Config should go in ~/.config/app-name/ not ~/.app-name/
+   - Path.home() / ".config" / "app-name" for standard location
+   - mkdir(parents=True, exist_ok=True) safely creates directory structure
+   - JSON is good choice for simple config (human-readable, built-in support)
+
+3. **Entry Points in pyproject.toml**
+   - [project.scripts] defines CLI entry points
+   - Format: command-name = "package.module:function"
+   - For Typer apps, point to the app object, not a function
+   - Entry point creates executable in PATH after pip install
+
+4. **Testing Typer Applications**
+   - typer.testing.CliRunner for testing CLI commands
+   - runner.invoke(app, ["command", "args"]) simulates CLI execution
+   - result.exit_code and result.stdout for assertions
+   - Mock file system paths with fixtures and patch()
+   - Helper functions avoid complex nested ternary expressions (SIM117)
+   - Use fixture(name="_prefix") to mark intentionally unused fixtures
+
+5. **Rich Output Formatting**
+   - Rich Tables provide beautiful formatted output
+   - Console.print() supports markup like [cyan], [green], [dim]
+   - table.add_row() for data rows, add_column() for column definitions
+   - title and header_style for visual polish
+   - Sorted output (sorted(config.items())) for consistency
+
+6. **Python Syntax Gotchas**
+   - Nested ternary expressions in lambdas need careful parentheses
+   - Extract complex logic into helper functions for clarity
+   - Python 3.10+ allows grouped context managers: with (a, b, c):
+   - Type hints for json.load() need explicit annotation: data: dict[str, Any]
+
+#### Files Created
+
+CLI Application:
+- src/station_chief/cli/app.py
+- src/station_chief/cli/config.py
+- src/station_chief/cli/commands/__init__.py
+- src/station_chief/cli/commands/config.py
+
+Tests:
+- tests/cli/__init__.py
+- tests/cli/test_config.py
+
+Modified:
+- src/station_chief/cli/__init__.py (exported app)
+- pyproject.toml (added [project.scripts] entry point)
+
+#### Acceptance Criteria Verification
+
+✅ `sc --version` shows version
+✅ `sc --help` shows available commands
+✅ `sc config show` displays configuration
+✅ `sc config set server_url http://localhost:8000` updates config
+✅ Config persists between runs
+
+The CLI skeleton is now complete and ready for adding domain-specific commands (repo management, etc.).
