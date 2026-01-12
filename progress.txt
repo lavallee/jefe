@@ -738,3 +738,13 @@ All checks pass successfully:
 - Renamed documentation references from Station Chief to Jefe across README, VISION, AGENT, AGENTS, and progress files.
 - Updated CLI command examples and config path to match the Jefe naming.
 - Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
+
+## Session: sc-pls - Rename database file references (2026-01-12)
+
+### Summary
+Updated default SQLite database filename to `jefe.db` for app and Alembic defaults.
+
+### Validation Results
+- Type checking: `mypy src/jefe`
+- Linting: `ruff check src/jefe`
+- Tests: `pytest`
