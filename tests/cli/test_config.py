@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
-from jefe.cli.app import app
+from jefe.cli import app
 from jefe.cli.config import (
     get_config_dir,
     get_config_file,

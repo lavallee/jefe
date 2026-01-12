@@ -1,5 +1,6 @@
 """Tests for authentication middleware and endpoints."""
 
+import stat
 from pathlib import Path
 from unittest.mock import patch
 
@@ -173,8 +174,6 @@ def test_api_key_file_permissions(mock_api_key_file: Path) -> None:
     save_api_key(key)
 
     # Check file permissions (should be 0o600 - owner read/write only)
-    import stat
-
     file_stat = mock_api_key_file.stat()
     # Get permission bits
     perms = stat.S_IMODE(file_stat.st_mode)

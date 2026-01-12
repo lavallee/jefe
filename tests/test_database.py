@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import String, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column
 
 from jefe.data.database import get_engine
@@ -78,8 +78,6 @@ class TestBaseRepository:
             await conn.run_sync(User.metadata.create_all)
 
         #Create session
-        from sqlalchemy.ext.asyncio import async_sessionmaker
-
         async_session = async_sessionmaker(
             engine,
             class_=AsyncSession,
@@ -137,8 +135,6 @@ class TestBaseModel:
 
         async with engine.begin() as conn:
             await conn.run_sync(User.metadata.create_all)
-
-        from sqlalchemy.ext.asyncio import async_sessionmaker
 
         async_session = async_sessionmaker(
             engine,

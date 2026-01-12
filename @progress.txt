@@ -48,3 +48,19 @@ Updated pyproject metadata to align the package with the Jefe rename.
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe`
+
+## Session: sc-5q9 - Update test file imports (2026-01-12)
+
+### Summary
+Updated test imports to align with current module exports and centralized import usage.
+
+### Key Updates
+- Switched CLI app import to package export
+- Consolidated async session maker imports in database tests
+- Moved inline imports to module scope in auth and placeholder tests
+- Updated health tests to use module-level package import
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe`

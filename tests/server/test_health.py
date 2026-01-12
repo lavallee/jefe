@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from jefe import __version__
+import jefe
 from jefe.server.app import create_app
 
 
@@ -35,7 +35,7 @@ def test_health_endpoint_returns_correct_values(client: TestClient) -> None:
     data = response.json()
 
     assert data["status"] == "healthy"
-    assert data["version"] == __version__
+    assert data["version"] == jefe.__version__
 
 
 def test_openapi_docs_available(client: TestClient) -> None:
@@ -53,4 +53,4 @@ def test_openapi_json_available(client: TestClient) -> None:
     assert "openapi" in data
     assert "info" in data
     assert data["info"]["title"] == "Station Chief"
-    assert data["info"]["version"] == __version__
+    assert data["info"]["version"] == jefe.__version__
