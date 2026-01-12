@@ -17,10 +17,10 @@ def get_api_key_file() -> Path:
     Get the path to the API key storage file.
 
     Returns:
-        Path to the API key file in the project root.
+        Path to the API key file in the home directory.
     """
-    # Store API key in project root as .station_chief_api_key
-    return Path.home() / ".station_chief" / "api_key"
+    # Store API key in the home directory as ~/.jefe/api_key
+    return Path.home() / ".jefe" / "api_key"
 
 
 def _hash_key(key: str) -> str:

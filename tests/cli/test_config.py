@@ -22,7 +22,7 @@ runner = CliRunner()
 @pytest.fixture
 def temp_config_dir(tmp_path: Path) -> Path:
     """Create a temporary config directory."""
-    config_dir = tmp_path / "config" / "station-chief"
+    config_dir = tmp_path / "config" / "jefe"
     config_dir.mkdir(parents=True)
     return config_dir
 
@@ -72,13 +72,13 @@ class TestConfigDirectory:
         with patch("pathlib.Path.home", return_value=tmp_path):
             config_dir = get_config_dir()
             assert config_dir.exists()
-            assert config_dir == tmp_path / ".config" / "station-chief"
+            assert config_dir == tmp_path / ".config" / "jefe"
 
     def test_get_config_file_path(self, tmp_path: Path) -> None:
         """Test that get_config_file returns correct path."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             config_file = get_config_file()
-            assert config_file == tmp_path / ".config" / "station-chief" / "config.json"
+            assert config_file == tmp_path / ".config" / "jefe" / "config.json"
 
 
 class TestConfigOperations:
@@ -123,14 +123,14 @@ class TestVersionCommand:
         """Test --version flag shows version."""
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
-        assert "Station Chief version" in result.stdout
+        assert "Jefe version" in result.stdout
         assert "0.1.0" in result.stdout
 
     def test_version_short_flag(self) -> None:
         """Test -v flag shows version."""
         result = runner.invoke(app, ["-v"])
         assert result.exit_code == 0
-        assert "Station Chief version" in result.stdout
+        assert "Jefe version" in result.stdout
 
 
 class TestHelpCommand:
@@ -140,7 +140,7 @@ class TestHelpCommand:
         """Test --help flag shows help."""
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "Station Chief - A comprehensive Git repository management system" in result.stdout
+        assert "Jefe - A comprehensive Git repository management system" in result.stdout
         assert "config" in result.stdout
 
     def test_config_help(self) -> None:

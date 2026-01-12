@@ -6,13 +6,13 @@ from typing import Any
 
 
 def get_config_dir() -> Path:
-    """Get XDG-compliant config directory for station-chief.
+    """Get XDG-compliant config directory for jefe.
 
     Returns:
-        Path to ~/.config/station-chief/
+        Path to ~/.config/jefe/
     """
     config_home = Path.home() / ".config"
-    config_dir = config_home / "station-chief"
+    config_dir = config_home / "jefe"
     config_dir.mkdir(parents=True, exist_ok=True)
     return config_dir
 
@@ -21,7 +21,7 @@ def get_config_file() -> Path:
     """Get path to config file.
 
     Returns:
-        Path to ~/.config/station-chief/config.json
+        Path to ~/.config/jefe/config.json
     """
     return get_config_dir() / "config.json"
 
