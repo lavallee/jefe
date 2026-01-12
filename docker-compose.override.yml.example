@@ -19,7 +19,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./pyproject.toml:/app/pyproject.toml
-      - station_chief_data:/app/data
+      - jefe_data:/app/data
       # Uncomment to share your SSH keys with the container (for git operations)
       # - ~/.ssh:/root/.ssh:ro
       # Uncomment to mount a local config directory
@@ -27,14 +27,17 @@ services:
 
     # Example: Override the default command for debugging
     # Uncomment the line below and comment out the command in docker-compose.yml
-    # command: >
-    #   uvicorn
-    #   jefe.server.app:create_app
-    #   --factory
-    #   --host 0.0.0.0
-    #   --port 8000
-    #   --reload
-    #   --log-level debug
+    # command:
+    #   - uvicorn
+    #   - jefe.server.app:create_app
+    #   - --factory
+    #   - --host
+    #   - 0.0.0.0
+    #   - --port
+    #   - "8000"
+    #   - --reload
+    #   - --log-level
+    #   - debug
 
 volumes:
-  station_chief_data:
+  jefe_data:
