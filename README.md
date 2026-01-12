@@ -1,8 +1,8 @@
-# Station Chief
+# Jefe
 
 A comprehensive Git repository management system with web and CLI interfaces.
 
-[![CI](https://github.com/yourusername/station-chief/workflows/CI/badge.svg)](https://github.com/yourusername/station-chief/actions/workflows/ci.yml)
+[![CI](https://github.com/yourusername/jefe/workflows/CI/badge.svg)](https://github.com/yourusername/jefe/actions/workflows/ci.yml)
 
 ## Features
 
@@ -48,7 +48,7 @@ ruff check src/jefe
 ## Project Structure
 
 ```
-station-chief/
+jefe/
 ├── src/jefe/
 │   ├── server/          # API and server components
 │   ├── cli/             # Command-line interface

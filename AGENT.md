@@ -5,7 +5,7 @@ Update this file as you learn new things about the codebase.
 
 ## Project Overview
 
-Station Chief is a comprehensive Git repository management system with web and CLI interfaces. It provides tools for managing, monitoring, and automating Git repository operations with both programmatic (REST API) and user-friendly (web + CLI) interfaces.
+Jefe is a comprehensive Git repository management system with web and CLI interfaces. It provides tools for managing, monitoring, and automating Git repository operations with both programmatic (REST API) and user-friendly (web + CLI) interfaces.
 
 ## Tech Stack
 
@@ -59,11 +59,11 @@ uvicorn jefe.server.app:create_app --factory --reload
 # Or using module entry point
 python -m jefe.server
 
-# CLI (installed as 'sc' command)
-sc --version
-sc --help
-sc config show
-sc config set server_url http://localhost:8000
+# CLI (installed as 'jefe' command)
+jefe --version
+jefe --help
+jefe config show
+jefe config set server_url http://localhost:8000
 ```
 
 ### Docker Setup
