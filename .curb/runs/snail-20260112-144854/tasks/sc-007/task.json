@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-007",
+  "title": "Docker Compose for development",
+  "priority": "P0",
+  "status": "completed",
+  "started_at": "2026-01-12T20:13:52Z",
+  "iterations": 1,
+  "completed_at": "2026-01-12T20:19:59Z",
+  "exit_code": 0
+}
