@@ -755,3 +755,11 @@ Updated default SQLite database filename to `jefe.db` for app and Alembic defaul
 
 - Verified `alembic/env.py` already imports `jefe.data.models.base` and needed no code changes.
 - Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
+
+## Session 17 (2026-01-12)
+
+### Task: sc-7mb - Regenerate lock file
+
+- Updated uv.lock to reflect the renamed `jefe` package and remove the `typer` extras entry.
+- Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
+- Note: `uv lock` could not run in the sandbox due to restricted network access and an empty UV cache.
