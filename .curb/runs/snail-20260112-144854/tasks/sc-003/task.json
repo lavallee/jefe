@@ -1,0 +1,8 @@
+{
+  "task_id": "sc-003",
+  "title": "Set up SQLAlchemy + Alembic",
+  "priority": "P0",
+  "status": "in_progress",
+  "started_at": "2026-01-12T19:54:13Z",
+  "iterations": 0
+}
