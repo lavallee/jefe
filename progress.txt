@@ -689,3 +689,11 @@ The CLI skeleton is now complete and ready for adding domain-specific commands (
 
 - Verified there are no remaining Python import statements using `station_chief` (only data path strings remain).
 - Ran feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
+
+## Session 11 (2026-01-12)
+
+### Task: sc-ns1 - Update ruff.toml and alembic.ini
+
+- Synced Ruff's isort first-party list with pyproject settings by adding tests to known-first-party.
+- Updated alembic.ini default sqlalchemy.url to point at ./data/station_chief.db.
+- Feedback loops: mypy src/jefe, pytest, ruff check src/jefe.
