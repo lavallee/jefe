@@ -1,4 +1,4 @@
-# Station Chief - Development Progress
+# Jefe - Development Progress
 
 ## Session 8 (2026-01-12)
 
@@ -570,7 +570,7 @@ Successfully implemented the Typer CLI application with configuration management
    - Main callback for global options
 
 2. **Configuration Module (src/station_chief/cli/config.py)**
-   - XDG-compliant configuration storage (~/.config/station-chief/config.json)
+   - XDG-compliant configuration storage (~/.config/jefe/config.json)
    - get_config_dir() creates directory with parents if needed
    - get_config_file() returns path to config file
    - load_config() returns dict or empty dict if file doesn't exist
@@ -730,3 +730,11 @@ All checks pass successfully:
 - Updated CI workflow lint/typecheck paths to `src/jefe`.
 - Verified Makefile already targets `src/jefe` for linting and type checks.
 - Feedback loops: `mypy src/jefe`, `ruff check src/jefe`, `pytest`.
+
+## Session 15 (2026-01-12)
+
+### Task: sc-bo2 - Update documentation
+
+- Renamed documentation references from Station Chief to Jefe across README, VISION, AGENT, AGENTS, and progress files.
+- Updated CLI command examples and config path to match the Jefe naming.
+- Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
