@@ -1,0 +1,36 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: station-chief-server
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:///./data/station_chief.db
+      PYTHONUNBUFFERED: 1
+    volumes:
+      # Mount source code for hot reload during development
+      - ./src:/app/src
+      # Mount pyproject.toml for dependency changes
+      - ./pyproject.toml:/app/pyproject.toml
+      # Create named volume for database persistence
+      - station_chief_data:/app/data
+    command: >
+      uvicorn
+      station_chief.server.app:create_app
+      --factory
+      --host 0.0.0.0
+      --port 8000
+      --reload
+    restart: unless-stopped
+    networks:
+      - station-chief
+
+networks:
+  station-chief:
+    driver: bridge
+
+volumes:
+  station_chief_data:
+    driver: local

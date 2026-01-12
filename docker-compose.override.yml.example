@@ -1,0 +1,40 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml to customize your local development setup
+# The override file is automatically loaded by Docker Compose and merged with docker-compose.yml
+
+services:
+  server:
+    # Example: Expose additional ports for debugging
+    ports:
+      - "8000:8000"
+      # - "5678:5678"  # Debugpy debugger port
+
+    # Example: Set additional environment variables for local development
+    environment:
+      # API_KEY can be set here for local testing (not recommended for production)
+      # API_KEY: your-test-key-here
+      DEBUG: "false"
+
+    # Example: Additional volumes for development tools
+    volumes:
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
+      - station_chief_data:/app/data
+      # Uncomment to share your SSH keys with the container (for git operations)
+      # - ~/.ssh:/root/.ssh:ro
+      # Uncomment to mount a local config directory
+      # - ~/.config/station-chief:/root/.config/station-chief
+
+    # Example: Override the default command for debugging
+    # Uncomment the line below and comment out the command in docker-compose.yml
+    # command: >
+    #   uvicorn
+    #   station_chief.server.app:create_app
+    #   --factory
+    #   --host 0.0.0.0
+    #   --port 8000
+    #   --reload
+    #   --log-level debug
+
+volumes:
+  station_chief_data:

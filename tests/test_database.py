@@ -104,7 +104,7 @@ class TestBaseRepository:
             assert retrieved_user.name == "John Doe"
 
             # Test get_all
-            user2 = await repo.create(name="Jane Doe", email="jane@example.com")
+            await repo.create(name="Jane Doe", email="jane@example.com")
             users = await repo.get_all()
             assert len(users) == 2
 
