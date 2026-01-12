@@ -32,3 +32,19 @@ Successfully validated Phase 1 foundation. All 8 validation steps pass with no b
 ### Ready for Phase 2
 The Phase 1 foundation is solid. No blocking issues identified.
 Ready to proceed with Phase 2 implementation.
+
+## Session: sc-sk7 - Update pyproject.toml (2026-01-12)
+
+### Summary
+Updated pyproject metadata to align the package with the Jefe rename.
+
+### Key Updates
+- Switched package name and URLs to `jefe`
+- Updated CLI entry point to `jefe`
+- Adjusted pytest and coverage configuration to use module paths
+- Expanded ruff first-party list to include tests
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe`

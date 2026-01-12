@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "station-chief"
+name = "jefe"
 version = "0.1.0"
 description = "A comprehensive Git repository management system with web and CLI interfaces"
 readme = "README.md"
@@ -53,13 +53,13 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/station-chief"
-Documentation = "https://station-chief.readthedocs.io"
-Repository = "https://github.com/yourusername/station-chief.git"
-Issues = "https://github.com/yourusername/station-chief/issues"
+Homepage = "https://github.com/yourusername/jefe"
+Documentation = "https://jefe.readthedocs.io"
+Repository = "https://github.com/yourusername/jefe.git"
+Issues = "https://github.com/yourusername/jefe/issues"
 
 [project.scripts]
-sc = "jefe.cli.app:app"
+jefe = "jefe.cli.app:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jefe"]
@@ -67,10 +67,10 @@ packages = ["src/jefe"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "--cov=src/jefe --cov-report=term-missing"
+addopts = "--cov=jefe --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["src/jefe"]
+source = ["jefe"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -125,7 +125,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["jefe"]
+known-first-party = ["jefe", "tests"]
 
 [tool.black]
 line-length = 100
