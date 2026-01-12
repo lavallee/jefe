@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-004",
+  "title": "Create FastAPI server skeleton",
+  "priority": "P0",
+  "status": "completed",
+  "started_at": "2026-01-12T20:01:28Z",
+  "iterations": 1,
+  "completed_at": "2026-01-12T20:05:25Z",
+  "exit_code": 0
+}
