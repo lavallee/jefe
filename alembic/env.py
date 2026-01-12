@@ -25,7 +25,7 @@ from jefe.data.models.base import Base
 target_metadata = Base.metadata
 
 # Override sqlalchemy.url from environment variable if present
-database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./station_chief.db")
+database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./jefe.db")
 config.set_main_option("sqlalchemy.url", database_url)
 
 

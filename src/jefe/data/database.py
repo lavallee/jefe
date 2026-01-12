@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 # Database URL from environment or default to SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./station_chief.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./jefe.db")
 
 
 def get_engine(database_url: str | None = None, **kwargs: Any) -> AsyncEngine:
