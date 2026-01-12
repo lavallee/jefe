@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-001",
+  "title": "Initialize Python project structure",
+  "priority": "P0",
+  "status": "completed",
+  "started_at": "2026-01-12T19:48:58Z",
+  "iterations": 1,
+  "completed_at": "2026-01-12T19:51:32Z",
+  "exit_code": 0
+}
