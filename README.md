@@ -2,6 +2,8 @@
 
 A comprehensive Git repository management system with web and CLI interfaces.
 
+[![CI](https://github.com/yourusername/station-chief/workflows/CI/badge.svg)](https://github.com/yourusername/station-chief/actions/workflows/ci.yml)
+
 ## Features
 
 - **Web Interface**: Modern web-based UI for repository management

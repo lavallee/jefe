@@ -40,6 +40,10 @@ known-first-party = ["station_chief"]
 [lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]
 
+[lint.per-file-ignores]
+# Pytest fixtures are meant to have unused parameters
+"tests/**/*.py" = ["ARG001"]
+
 [format]
 # Configuration for the code formatter
 skip-magic-trailing-comma = false
