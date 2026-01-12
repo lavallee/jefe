@@ -697,3 +697,19 @@ The CLI skeleton is now complete and ready for adding domain-specific commands (
 - Synced Ruff's isort first-party list with pyproject settings by adding tests to known-first-party.
 - Updated alembic.ini default sqlalchemy.url to point at ./data/station_chief.db.
 - Feedback loops: mypy src/jefe, pytest, ruff check src/jefe.
+
+## Session 12 (2026-01-12)
+
+### Task: sc-9yl - Update Docker configuration
+
+- Updated Dockerfile to run the server via module entrypoint.
+- Renamed Docker Compose container, network, and volume to Jefe naming.
+- Switched Docker Compose database path to `./data/jefe.db` and updated overrides.
+- Added `jefe.db` to .dockerignore.
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 23 source files
+- ✓ Tests: 42 tests passed
+- ✓ Linting: ruff found no issues
