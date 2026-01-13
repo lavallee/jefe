@@ -104,10 +104,12 @@ async def get_harness(
 
 @router.post("/api/harnesses/discover", response_model=list[HarnessConfigResponse])
 async def discover_harnesses(
-    _api_key: APIKey, session: AsyncSession = Depends(get_session)
+    _api_key: APIKey,
+    project_id: int | None = None,
+    session: AsyncSession = Depends(get_session),
 ) -> list[HarnessConfigResponse]:
     """Discover configs for all harnesses."""
-    configs = await HarnessService(session).discover()
+    configs = await HarnessService(session).discover(project_id=project_id)
     return await _configs_to_response(session, configs)
 
 
