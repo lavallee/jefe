@@ -2955,3 +2955,94 @@ All translation features (API, CLI, Web UI) have been successfully implemented a
 - Integration with CLI client for actual caching (sc-051 or similar)
 - Sync logic to push dirty items to server
 - Cache invalidation strategies beyond TTL
+
+## Session: sc-051 (2026-01-13)
+
+### Task: Offline detection logic
+
+Successfully implemented offline detection and graceful fallback to cached data for the CLI.
+
+#### Implementation Summary
+
+1. **src/jefe/cli/client.py**
+   - Added `is_online()` async function with health check endpoint
+   - 2-second timeout prevents blocking the CLI
+   - 30-second caching of online status to avoid repeated checks
+   - Added `clear_online_cache()` for testing and manual cache invalidation
+   - Uses httpx.TimeoutException and httpx.RequestError for error handling
+
+2. **src/jefe/cli/commands/projects.py**
+   - Updated list_projects to check online status first
+   - Falls back to CacheManager when offline
+   - Caches projects from server when online for future offline use
+   - Shows "⚠ Offline mode - showing cached data" indicator
+   - Updated show_project with similar offline fallback logic
+
+3. **src/jefe/cli/commands/skills.py**
+   - Updated list_skills to support offline mode for available skills
+   - Caches skills when fetching from server
+   - Installed skills require server connection (noted to user)
+   - Shows clear messaging about what's available offline vs online
+
+4. **tests/cli/test_offline.py**
+   - Comprehensive test coverage for offline detection
+   - Tests for health check with mock responses
+   - Tests for cache expiration and TTL
+   - Tests for cache isolation using in-memory SQLite
+   - All 10 tests pass
+
+#### Feedback Loop Results
+
+All checks pass:
+- ✓ Type checking: mypy found no issues in 82 source files
+- ✓ Tests: All 453 tests pass (10 new offline tests added)
+- ✓ Linting: ruff found no issues
+
+#### Key Implementation Details
+
+1. **Health Check Approach**
+   - Uses existing `/health` endpoint on the server
+   - Short 2-second timeout prevents blocking user experience
+   - Catches both RequestError and TimeoutException
+
+2. **Caching Strategy**
+   - Online status cached for 30 seconds to avoid repeated checks
+   - Data cached when fetched from server for offline access
+   - Uses existing CacheManager infrastructure from sc-050
+
+3. **User Experience**
+   - Clear offline indicator: "⚠ Offline mode - showing cached data"
+   - Graceful degradation - shows what's available offline
+   - Informative messages when data not available offline
+
+4. **Test Isolation**
+   - Used in-memory SQLite database for cache tests
+   - Followed existing test patterns from test_cache_manager.py
+   - Proper fixture setup prevents test cross-contamination
+
+#### Acceptance Criteria Verification
+
+✅ Detects when server unreachable (with timeout and error handling)
+✅ Falls back to cached data (projects and skills)
+✅ Shows offline indicator (yellow warning message)
+✅ Quick timeout doesn't block (2 seconds)
+✅ Tests pass (10 new tests, all green)
+
+#### Files Created/Modified
+
+Created:
+- tests/cli/test_offline.py (10 comprehensive tests)
+
+Modified:
+- src/jefe/cli/client.py (added is_online() and caching)
+- src/jefe/cli/commands/projects.py (offline support)
+- src/jefe/cli/commands/skills.py (offline support)
+
+#### Important Notes
+
+- The status command already had offline support implemented
+- Cache infrastructure from sc-049 and sc-050 made this straightforward
+- Installed skills currently require server connection (could be cached in future)
+- Resource warnings in tests are pre-existing SQLite connection issues
+
+The offline detection logic is now fully functional and provides a smooth user experience when the server is unavailable.
