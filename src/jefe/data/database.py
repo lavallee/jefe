@@ -52,6 +52,20 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+def configure_engine(database_url: str | None = None) -> None:
+    """Reconfigure the global engine and session factory."""
+    global engine, AsyncSessionLocal
+
+    engine = get_engine(database_url)
+    AsyncSessionLocal = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency for getting async database sessions.
@@ -72,10 +86,10 @@ async def init_db() -> None:
 
     This should be called on application startup if not using migrations.
     """
-    from jefe.data.models.base import Base
+    from jefe.data import models
 
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(models.Base.metadata.create_all)
 
 
 async def close_db() -> None:

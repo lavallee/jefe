@@ -19,7 +19,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import the Base from models to get metadata
-from jefe.data.models.base import Base
+from jefe.data.models import Base  # noqa: F401
 
 # Set target metadata for autogenerate support
 target_metadata = Base.metadata
