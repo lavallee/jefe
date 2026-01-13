@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-056",
+  "title": "Bundle model and API",
+  "priority": "P2",
+  "status": "completed",
+  "started_at": "2026-01-13T19:58:01Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T20:05:13Z",
+  "exit_code": 0
+}
