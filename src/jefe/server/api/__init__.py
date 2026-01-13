@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from jefe.server.api.auth import router as auth_router
+from jefe.server.api.bundles import router as bundles_router
 from jefe.server.api.harnesses import router as harnesses_router
 from jefe.server.api.health import router as health_router
 from jefe.server.api.projects import router as projects_router
@@ -21,6 +22,7 @@ api_router.include_router(auth_router, tags=["auth"])
 api_router.include_router(projects_router, tags=["projects"])
 api_router.include_router(harnesses_router, tags=["harnesses"])
 api_router.include_router(skills_router, tags=["skills"])
+api_router.include_router(bundles_router, tags=["bundles"])
 api_router.include_router(sources_router, tags=["sources"])
 api_router.include_router(status_router, tags=["status"])
 api_router.include_router(sync_router, tags=["sync"])

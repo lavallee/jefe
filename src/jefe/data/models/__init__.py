@@ -1,6 +1,7 @@
 """Data models package."""
 
 from jefe.data.models.base import Base, TimestampMixin
+from jefe.data.models.bundle import Bundle
 from jefe.data.models.harness import Harness
 from jefe.data.models.harness_config import ConfigScope, HarnessConfig
 from jefe.data.models.installed_skill import InstalledSkill, InstallScope
@@ -12,6 +13,7 @@ from jefe.data.models.translation_log import TranslationLog, TranslationType
 
 __all__ = [
     "Base",
+    "Bundle",
     "ConfigScope",
     "Harness",
     "HarnessConfig",

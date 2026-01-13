@@ -1,6 +1,7 @@
 """Repositories package."""
 
 from jefe.data.repositories.base import BaseRepository
+from jefe.data.repositories.bundle import BundleRepository
 from jefe.data.repositories.harness import HarnessRepository
 from jefe.data.repositories.harness_config import HarnessConfigRepository
 from jefe.data.repositories.installed_skill import InstalledSkillRepository
@@ -12,6 +13,7 @@ from jefe.data.repositories.translation_log import TranslationLogRepository
 
 __all__ = [
     "BaseRepository",
+    "BundleRepository",
     "HarnessConfigRepository",
     "HarnessRepository",
     "InstalledSkillRepository",

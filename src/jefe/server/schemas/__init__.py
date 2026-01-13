@@ -1,5 +1,12 @@
 """Pydantic schemas for API request/response validation."""
 
+from jefe.server.schemas.bundle import (
+    BundleApplyRequest,
+    BundleApplyResponse,
+    BundleCreateRequest,
+    BundleResponse,
+    SkillRef,
+)
 from jefe.server.schemas.common import ErrorResponse, HealthResponse, MessageResponse
 from jefe.server.schemas.harness import HarnessConfigResponse, HarnessResponse
 from jefe.server.schemas.projects import (
@@ -19,6 +26,10 @@ from jefe.server.schemas.source import SourceCreate, SourceResponse, SyncRespons
 from jefe.server.schemas.status import StatusResponse
 
 __all__ = [
+    "BundleApplyRequest",
+    "BundleApplyResponse",
+    "BundleCreateRequest",
+    "BundleResponse",
     "ErrorResponse",
     "HarnessConfigResponse",
     "HarnessResponse",
@@ -32,6 +43,7 @@ __all__ = [
     "ProjectResponse",
     "ProjectUpdate",
     "SkillInstallRequest",
+    "SkillRef",
     "SkillResponse",
     "SourceCreate",
     "SourceResponse",
