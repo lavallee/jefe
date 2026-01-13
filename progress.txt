@@ -786,3 +786,137 @@ Updated default SQLite database filename to `jefe.db` for app and Alembic defaul
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe tests`
+
+## Session 20 (2026-01-12)
+
+### Task: sc-020 - Git source sync service
+
+Successfully implemented a service for cloning/pulling Git repositories and indexing SKILL.md files with YAML frontmatter parsing.
+
+#### Implementation Summary
+
+1. **PyYAML Dependency**
+   - Added pyyaml>=6.0.0 to pyproject.toml for YAML frontmatter parsing
+
+2. **Skill Parser Utility (src/jefe/server/utils/skill_parser.py)**
+   - parse_skill_file(): Extracts and validates YAML frontmatter from SKILL.md files
+   - Validates required fields (name) and extracts optional fields (display_name, description, version, author, tags)
+   - Stores additional metadata fields in metadata dictionary
+   - find_skill_files(): Recursively discovers all SKILL.md files in a repository
+   - Custom SkillParseError exception for parse failures
+
+3. **Skill Source Service (src/jefe/server/services/skill_source.py)**
+   - SkillSourceService class with AsyncSession and configurable data directory
+   - sync_source(): Main sync method that orchestrates git operations and skill indexing
+   - _sync_git_repo(): Handles git clone (shallow with --depth 1) or pull operations
+   - _clone_repo() and _remove_repo(): Helper methods for git operations
+   - _create_or_update_skill(): Creates or updates Skill records from parsed metadata
+   - Status tracking: PENDING → SYNCING → SYNCED/ERROR
+   - Graceful error handling with logging and status updates
+   - list_sources(), get_source(), list_skills(): Query methods for accessing data
+
+4. **Test Fixtures (tests/fixtures/)**
+   - sample_skills_repo/ with valid SKILL.md files (root and subdirectory)
+   - invalid_skill.md: Missing required 'name' field
+   - no_frontmatter.md: File without YAML frontmatter
+   - malformed_yaml.md: Invalid YAML syntax
+
+5. **Tests (tests/server/test_skill_parser.py)**
+   - 9 comprehensive parser tests
+   - Valid file parsing with all fields and minimal fields
+   - Error cases: missing required field, no frontmatter, malformed YAML, file not found
+   - Recursive file discovery in directory trees
+
+6. **Tests (tests/server/test_skill_source_service.py)**
+   - 14 service tests with mocked sessions and real git operations
+   - Repository path management and data directory creation
+   - Git operations: clone, pull, sync with existing and new repos
+   - CRUD operations: create/update skills from metadata
+   - Full sync workflow with status tracking
+   - List and query operations
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 55 source files
+- ✓ Tests: All 117 tests pass (23 new tests, 94 existing)
+- ✓ Linting: ruff found no issues in new code (2 pre-existing E501 warnings unrelated to task)
+- ✓ Coverage: 85% coverage on skill_source.py, 97% on skill_parser.py
+
+#### Key Learnings
+
+1. **YAML Frontmatter Parsing**
+   - Use re.match() with re.DOTALL flag to extract YAML between --- delimiters
+   - yaml.safe_load() for secure parsing (prevents code execution)
+   - Validate frontmatter is a dictionary, not a list or scalar
+   - Handle optional fields with .get() and convert to None for empty strings
+
+2. **GitPython Usage**
+   - Repo.clone_from(url, path, depth=1) for shallow clone (faster, less disk space)
+   - Check if repo exists with (path / ".git").exists()
+   - For pulls: Repo(path).remotes.origin.pull()
+   - InvalidGitRepositoryError when directory exists but isn't a valid repo
+   - Use bare=True for test repos that will be cloned from
+
+3. **Git Branch Naming**
+   - Modern Git uses 'main' as default branch, not 'master'
+   - Use Repo.init(path, initial_branch="main") to set default branch
+   - Push/pull with explicit branch names: "main:main"
+
+4. **Async Service Pattern**
+   - Services take AsyncSession in constructor
+   - Instantiate repositories in __init__
+   - Use session.commit() after batch operations
+   - Use session.flush() before querying newly created records
+   - Error handling: catch exceptions, update status, re-raise with context
+
+5. **Testing Git Operations**
+   - Create real git repos in tmp_path for integration tests
+   - Use bare repos for remote repositories in tests
+   - Create working clones to push to bare repos
+   - Test both clone (first time) and pull (updates) scenarios
+
+6. **Python datetime.UTC**
+   - datetime.UTC is Python 3.11+ only
+   - Use timezone.utc for Python 3.10 compatibility
+   - ruff UP017 suggests datetime.UTC but may not work on all versions
+   - Can auto-fix with ruff --fix but verify compatibility
+
+7. **Test Organization**
+   - Group related tests in test classes
+   - Use descriptive test names that explain what's being tested
+   - Mock external dependencies (repositories) but use real filesystem for git
+   - Use fixtures for common setup (mock_session, temp directories)
+   - Combine multiple with statements using Python 3.10+ syntax: with (a, b, c):
+
+#### Files Created
+
+Service and Utilities:
+- src/jefe/server/services/skill_source.py
+- src/jefe/server/utils/skill_parser.py
+
+Test Fixtures:
+- tests/fixtures/sample_skills_repo/SKILL.md
+- tests/fixtures/sample_skills_repo/subdirectory/SKILL.md
+- tests/fixtures/invalid_skill.md
+- tests/fixtures/no_frontmatter.md
+- tests/fixtures/malformed_yaml.md
+
+Tests:
+- tests/server/test_skill_parser.py
+- tests/server/test_skill_source_service.py
+
+Modified:
+- pyproject.toml (added pyyaml dependency)
+
+#### Acceptance Criteria Verification
+
+✅ Can clone a git repo (shallow clone with --depth 1)
+✅ Can pull updates from existing repos
+✅ Finds all SKILL.md files in repo (recursive search)
+✅ Parses skill metadata correctly (name, version, description, etc.)
+✅ Creates Skill records in database (with create/update logic)
+✅ Handles errors gracefully (status tracking, logging, exceptions)
+✅ Tests pass (23 new tests, all passing)
+
+The Git source sync service is fully implemented and ready for integration with API endpoints.
