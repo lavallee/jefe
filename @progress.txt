@@ -103,3 +103,15 @@ Implemented Phase 2 core discovery with project registry, Claude Code adapter, d
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-013 - Harness adapter base class (2026-01-12)
+
+### Summary
+- Added harness adapter registry and expanded base interface with skills support.
+- Updated Claude Code adapter to implement the new interface.
+- Added registry tests.
+
+### Validation Results
+- Type checking: `mypy src/jefe`
+- Tests: `pytest`
+- Linting: `ruff check src/jefe tests`

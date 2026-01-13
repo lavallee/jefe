@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 from jefe.adapters.base import ConfigKind, ConfigScope, DiscoveredConfig, HarnessAdapter
@@ -11,8 +12,13 @@ from jefe.adapters.base import ConfigKind, ConfigScope, DiscoveredConfig, Harnes
 class ClaudeCodeAdapter(HarnessAdapter):
     """Adapter for Claude Code config discovery."""
 
-    name = "claude-code"
-    display_name = "Claude Code"
+    @property
+    def name(self) -> str:
+        return "claude-code"
+
+    @property
+    def display_name(self) -> str:
+        return "Claude Code"
 
     def discover_global(self) -> list[DiscoveredConfig]:
         base_dir = Path.home() / ".claude"
@@ -117,7 +123,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
         if not path.exists() or not path.is_file():
             return []
 
-        content = self._parse_config(path)
+        content = self.parse_config(path)
         return [
             DiscoveredConfig(
                 harness=self.name,
@@ -130,7 +136,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
             )
         ]
 
-    def _parse_config(self, path: Path) -> dict[str, object] | str:
+    def parse_config(self, path: Path) -> dict[str, object] | str:
         if path.suffix.lower() == ".json":
             raw = path.read_text()
             try:
@@ -142,3 +148,29 @@ class ClaudeCodeAdapter(HarnessAdapter):
             return raw
 
         return path.read_text()
+
+    def get_skills_path(self, scope: ConfigScope, project_path: Path | None = None) -> Path:
+        if scope == "global":
+            return Path.home() / ".claude" / "skills"
+
+        if project_path is None:
+            raise ValueError("project_path is required for project scope skills")
+
+        return project_path.expanduser() / ".claude" / "skills"
+
+    def install_skill(
+        self, skill: Path, scope: ConfigScope, project_path: Path | None = None
+    ) -> Path:
+        skill_path = Path(skill)
+        destination_dir = self.get_skills_path(scope, project_path=project_path)
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        destination = destination_dir / skill_path.name
+
+        if skill_path.is_dir():
+            if destination.exists():
+                shutil.rmtree(destination)
+            shutil.copytree(skill_path, destination)
+        else:
+            shutil.copy2(skill_path, destination)
+
+        return destination

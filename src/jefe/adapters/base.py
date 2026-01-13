@@ -27,9 +27,17 @@ class DiscoveredConfig:
 class HarnessAdapter(ABC):
     """Base class for harness adapters."""
 
-    name: str
-    display_name: str
     version: str = "0.1.0"
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Machine-friendly adapter name."""
+
+    @property
+    @abstractmethod
+    def display_name(self) -> str:
+        """Human-friendly adapter name."""
 
     @abstractmethod
     def discover_global(self) -> list[DiscoveredConfig]:
@@ -40,3 +48,17 @@ class HarnessAdapter(ABC):
         self, project_path: Path, project_id: int | None = None, project_name: str | None = None
     ) -> list[DiscoveredConfig]:
         """Discover project-level configs for the harness."""
+
+    @abstractmethod
+    def parse_config(self, path: Path) -> dict[str, object] | str:
+        """Parse a config file into structured data."""
+
+    @abstractmethod
+    def get_skills_path(self, scope: ConfigScope, project_path: Path | None = None) -> Path:
+        """Return the skills install path for a scope."""
+
+    @abstractmethod
+    def install_skill(
+        self, skill: Path, scope: ConfigScope, project_path: Path | None = None
+    ) -> Path:
+        """Install a skill into the harness scope and return the installed path."""
