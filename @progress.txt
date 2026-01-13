@@ -126,3 +126,15 @@ Implemented Phase 2 core discovery with project registry, Claude Code adapter, d
 - Type checking: `mypy src/jefe`
 - Linting: `ruff check src/jefe tests`
 - Tests: `pytest`
+
+## Session: sc-015 - HarnessConfig model and API (2026-01-12)
+
+### Summary
+- Added Harness and HarnessConfig models with repositories, migrations, and startup seeding for Claude Code.
+- Implemented HarnessService to persist discovered configs with content hashing and updated API endpoints to serve stored configs.
+- Added harness API tests covering seeded harnesses and content hash updates, and updated discovery tests for persisted configs.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
