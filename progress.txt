@@ -1228,3 +1228,90 @@ The Sources API is now fully implemented and ready for use.
 - CLI commands call existing /api/sources endpoints
 - Follows established patterns from projects and harnesses commands
 - Authentication via X-API-Key header (requires `sc config set api_key <key>`)
+
+## Session: 2026-01-13 - sc-025: Skills CLI commands
+
+### What Was Done
+- Implemented complete CLI commands for browsing and installing skills
+- Created skills.py with search, list, show, install, and uninstall commands
+- Added comprehensive test coverage with 12 tests covering all scenarios
+- Registered skills commands in main CLI app
+- All acceptance criteria met with 86% code coverage on skills.py
+
+### Key Technical Decisions
+1. **Rich Display**: Used Rich library for formatted tables and detailed skill panels
+2. **Name Resolution**: Followed existing pattern for resolving entities by name or numeric ID
+3. **Project Filtering**: `sc skills list --installed --project NAME` filters by project
+4. **Install Scope**: Requires explicit --global or --project flag (mutually exclusive)
+5. **Uninstall by ID**: Uses install_id rather than skill name for precise uninstallation
+
+### Patterns Learned
+- CLI command structure: Typer app → anyio.run() → async functions with create_client()
+- Helper functions: _require_api_key(), _request(), _fail_request(), _resolve_*_id()
+- Rich formatting: Tables with color markup, Panels for detailed views
+- Complexity reduction: Extract helper functions to keep complexity under threshold (C901)
+- Test pattern: httpx.MockTransport with handler functions for mocking API responses
+
+### Implementation Highlights
+1. **sc skills search <query>**: Searches by tag first, then by name
+2. **sc skills list [--installed] [--project]**: Lists available or installed skills with optional filtering
+3. **sc skills show <name>**: Rich panel with tags, metadata, and full description
+4. **sc skills install**: Validates scope, resolves IDs, displays installation path
+5. **sc skills uninstall <id>**: Removes installation by ID
+
+### Refactoring for Complexity
+- Extracted _resolve_project_id() helper (used by list and install)
+- Extracted _resolve_harness_id() helper (used by install)
+- Extracted _list_installed_skills() and _list_available_skills()
+- Reduced _list_skills_async and _install_skill_async complexity from 11 to < 10
+
+### Files Created
+- src/jefe/cli/commands/skills.py - CLI command implementations (198 lines)
+- tests/cli/test_skills.py - Comprehensive test suite (12 tests)
+
+### Files Modified
+- src/jefe/cli/app.py - Registered skills_app subcommand
+
+### Test Results
+- All 177 tests pass (12 new skills CLI tests)
+- Type checking: ✓ (mypy - 64 source files)
+- Linting: ✓ (ruff - clean)
+- Code coverage: 79% overall, 86% on skills.py
+
+### Acceptance Criteria Verification
+✅ `sc skills search git` finds git-related skills
+✅ `sc skills list --installed` shows installed
+✅ `sc skills install pdf --global` installs globally
+✅ `sc skills install pdf --project .` installs to project
+✅ Tests pass (12/12 tests passing)
+
+### Integration Notes
+- Skills API backend was already implemented (sc-023)
+- CLI commands call existing /api/skills endpoints
+- Follows established patterns from sources and projects commands
+- Authentication via X-API-Key header (requires `sc config set api_key <key>`)
+
+### Command Examples
+```bash
+# Search for skills
+sc skills search git
+
+# List available skills
+sc skills list
+
+# List installed skills
+sc skills list --installed
+sc skills list --installed --project my-project
+
+# Show skill details
+sc skills show pdf
+
+# Install skill globally
+sc skills install pdf --harness claude-code --global
+
+# Install skill to project
+sc skills install pdf --harness claude-code --project my-project
+
+# Uninstall skill
+sc skills uninstall 1
+```
