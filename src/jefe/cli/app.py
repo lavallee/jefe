@@ -7,6 +7,7 @@ from jefe import __version__
 from jefe.cli.commands.config import config_app
 from jefe.cli.commands.harnesses import harnesses_app
 from jefe.cli.commands.projects import projects_app
+from jefe.cli.commands.sources import sources_app
 from jefe.cli.commands.status import status_app
 
 app = typer.Typer(
@@ -20,6 +21,7 @@ console = Console()
 app.add_typer(config_app, name="config")
 app.add_typer(projects_app, name="projects")
 app.add_typer(harnesses_app, name="harnesses")
+app.add_typer(sources_app, name="sources")
 app.add_typer(status_app, name="status")
 
 
