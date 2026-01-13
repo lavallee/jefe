@@ -1,5 +1,60 @@
 # Jefe - Development Progress
 
+## Session 10 (2026-01-13)
+
+### Epic: sc-E03 - Skills Management
+
+Verified that the Skills Management system was already fully implemented. Fixed test isolation issues in CLI tests.
+
+#### Findings
+
+The Skills Management epic was already complete from previous sessions with:
+
+1. **Data Models** (`src/jefe/data/models/`)
+   - `SkillSource`: Skill repository/marketplace source with sync status
+   - `Skill`: Individual skill metadata with YAML frontmatter support
+   - `InstalledSkill`: Tracks installations per harness/scope/project
+
+2. **Services** (`src/jefe/server/services/`)
+   - `SkillSourceService`: Git clone/pull, SKILL.md parsing, indexing
+   - `SkillService`: Install/uninstall skills via harness adapters
+
+3. **REST API** (`src/jefe/server/api/`)
+   - `/api/skills`: List, search, show, install, uninstall skills
+   - `/api/sources`: CRUD for skill sources, trigger sync
+
+4. **CLI Commands** (`src/jefe/cli/commands/`)
+   - `skills search/list/show/install/uninstall`
+   - `sources list/add/sync/remove`
+   - Offline cache support for skill metadata
+
+#### Test Fixes Applied
+
+Fixed CLI test isolation issues caused by offline mode cache:
+- Added `reset_online_cache` fixture to clear `is_online()` cache
+- Mocked `is_online()` to return `True` for tests expecting server
+- Updated `test_projects_connection_error` to test offline behavior
+- Mocked `CacheManager` where needed to avoid stale cache data
+
+#### Key Learnings
+
+1. **Online Status Caching**: `src/jefe/cli/client.py` caches `is_online()` result for 30 seconds. Tests must call `clear_online_cache()` to avoid cross-test pollution.
+
+2. **Test Isolation Pattern**: When testing CLI commands that have offline fallback, always mock both:
+   - `is_online()` to control online/offline behavior
+   - `CacheManager` when testing online mode to avoid cache side effects
+
+3. **Offline Mode Architecture**: CLI commands check `is_online()` first, then either:
+   - Online: Call server API, cache results
+   - Offline: Read from local SQLite cache, show warning
+
+#### Feedback Loop Results
+
+All checks pass:
+- mypy: 88 source files with no issues
+- pytest: 496 tests passed
+- ruff: All skills-related code passes linting
+
 ## Session 9 (2026-01-13)
 
 ### Task: sc-052 - Sync protocol
