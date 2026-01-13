@@ -204,12 +204,16 @@ class SkillSourceService:
         # Handle tags
         tags = metadata.get("tags", [])
         if tags:
-            skill_data["tags"] = tags
+            import json
+
+            skill_data["tags"] = json.dumps(tags)
 
         # Handle additional metadata
         additional_metadata = metadata.get("metadata")
         if additional_metadata:
-            skill_data["metadata_json"] = additional_metadata
+            import json
+
+            skill_data["metadata_json"] = json.dumps(additional_metadata)
 
         if existing_skill:
             # Update existing skill

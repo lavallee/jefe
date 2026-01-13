@@ -61,6 +61,7 @@ Issues = "https://github.com/yourusername/jefe/issues"
 
 [project.scripts]
 jefe = "jefe.cli.app:app"
+sc = "jefe.cli.app:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jefe"]

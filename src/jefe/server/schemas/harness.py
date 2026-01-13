@@ -8,6 +8,7 @@ from jefe.data.models.harness_config import ConfigScope
 class HarnessResponse(BaseModel):
     """Harness metadata."""
 
+    id: int = Field(..., description="Harness ID")
     name: str = Field(..., description="Harness identifier")
     display_name: str = Field(..., description="Human readable name")
     version: str = Field(..., description="Adapter version")

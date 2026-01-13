@@ -37,6 +37,9 @@ class DummyAdapter(HarnessAdapter):
     ) -> Path:
         return Path("installed") / skill.name
 
+    def uninstall_skill(self, _installed_path: Path) -> bool:
+        return True
+
 
 def test_registry_register_and_list(monkeypatch) -> None:
     monkeypatch.setattr(registry, "_ADAPTERS", {})

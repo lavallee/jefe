@@ -195,14 +195,23 @@ class SkillService:
             )
 
         # Get skill source path from data directory
-        skill_source_path = (
-            Path.cwd() / "data" / "skill_repos" / f"source_{skill.source_id}" / skill.name
-        )
+        # Skills can be at the repo root or in subdirectories, so we need to search for them
+        repo_path = Path.cwd() / "data" / "skill_repos" / f"source_{skill.source_id}"
+
+        # Try direct path first (skill at repo root)
+        skill_source_path = repo_path / skill.name
+
+        # If not found, search in common skill directories
         if not skill_source_path.exists():
-            raise SkillInstallError(
-                f"Skill source not found at {skill_source_path}. "
-                f"Ensure the source has been synced."
-            )
+            # Try skills/ subdirectory (common pattern)
+            skills_subdir = repo_path / "skills" / skill.name
+            if skills_subdir.exists():
+                skill_source_path = skills_subdir
+            else:
+                raise SkillInstallError(
+                    f"Skill source not found at {skill_source_path} or {skills_subdir}. "
+                    f"Ensure the source has been synced."
+                )
 
         # Convert InstallScope to ConfigScope
         config_scope = ConfigScope.GLOBAL if scope == InstallScope.GLOBAL else ConfigScope.PROJECT

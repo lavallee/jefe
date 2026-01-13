@@ -77,6 +77,7 @@ async def list_harnesses(
     harnesses = await HarnessService(session).list_harnesses()
     return [
         HarnessResponse(
+            id=harness.id,
             name=harness.name,
             display_name=harness.display_name,
             version=harness.version,
@@ -96,6 +97,7 @@ async def get_harness(
     if harness is None:
         raise HTTPException(status_code=404, detail="Harness not found")
     return HarnessResponse(
+        id=harness.id,
         name=harness.name,
         display_name=harness.display_name,
         version=harness.version,
