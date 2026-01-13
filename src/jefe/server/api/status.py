@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jefe.adapters import get_adapters
 from jefe.data.database import get_session
-from jefe.data.models.project import Manifestation, Project
+from jefe.data.models.manifestation import Manifestation
+from jefe.data.models.project import Project
 from jefe.server.auth import APIKey
 from jefe.server.schemas.status import StatusResponse
 from jefe.server.services.discovery import discover_all

@@ -9,7 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from jefe.adapters import DiscoveredConfig
 from jefe.data.database import get_session
-from jefe.data.models.project import Manifestation, ManifestationType, Project
+from jefe.data.models.manifestation import Manifestation, ManifestationType
+from jefe.data.models.project import Project
 from jefe.server.auth import APIKey
 from jefe.server.schemas.harnesses import HarnessConfigResponse
 from jefe.server.schemas.projects import (
