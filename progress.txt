@@ -3125,3 +3125,66 @@ Modified:
 - Resource warnings in tests are pre-existing SQLite connection issues
 
 The offline detection logic is now fully functional and provides a smooth user experience when the server is unavailable.
+
+## Session: 2026-01-13 - Task sc-054: Conflict resolution UI
+
+### Task Context
+Implemented CLI interface for reviewing and resolving sync conflicts in the jefe project.
+
+### Key Implementation Details
+
+1. **Database Schema**
+   - Added CachedConflict model with fields: entity_type, local_id, server_id, timestamps, resolution status
+   - Stored entity data as JSON for diff display (local_data, server_data)
+   - Added ConflictResolutionType enum: LOCAL_WINS, SERVER_WINS, UNRESOLVED
+
+2. **Repository Pattern**
+   - Created ConflictRepository with methods: get_by_id, get_unresolved, add, resolve, delete, clear_resolved
+   - Updated CacheManager to include conflicts repository
+
+3. **Conflict Persistence**
+   - Modified SyncProtocol._update_project_from_server to persist conflicts with entity data
+   - Added _persist_conflict helper method to convert between protocol and cache model enums
+   - Conflicts are now stored during sync operations for later review
+
+4. **CLI Commands**
+   - `jefe sync conflicts` - Lists all unresolved conflicts with details in table format
+   - `jefe sync resolve <id>` - Resolves conflicts with three modes:
+     * --keep-local: Automatically keep local version
+     * --keep-server: Automatically keep server version
+     * Interactive mode (default): Shows diff and prompts user for choice
+
+5. **Code Quality**
+   - Refactored _sync_resolve_async into smaller functions to reduce complexity (C901)
+   - Extracted _show_conflict_details and _prompt_resolution helper functions
+   - All tests pass (8 new tests for conflict resolution)
+   - Mypy type checking passes
+   - Ruff linting passes
+
+### Technical Challenges
+- Initially the task description referenced 'station_chief' but the actual project is 'jefe' - adapted accordingly
+- Complexity warning (C901) required refactoring the resolve function into helpers
+- Had to map between protocol enums (ConflictResolution) and cache model enums (ConflictResolutionType)
+
+### Testing Strategy
+- Created comprehensive tests covering all scenarios:
+  * No conflicts
+  * Listing conflicts
+  * Resolving with --keep-local
+  * Resolving with --keep-server
+  * Error handling (not found, already resolved, both flags)
+  * Interactive mode with diff display
+
+### Architecture Decisions
+- Used SQLAlchemy for conflict persistence (consistent with existing cache pattern)
+- Stored full entity data as JSON to enable rich diff display
+- Separated resolution tracking from actual data sync (resolution applied on next sync)
+
+### Files Modified
+- src/jefe/cli/cache/models.py (added CachedConflict, enums)
+- src/jefe/cli/cache/repositories.py (added ConflictRepository)
+- src/jefe/cli/cache/manager.py (added conflicts property)
+- src/jefe/cli/sync/protocol.py (added conflict persistence)
+- src/jefe/cli/commands/sync.py (added conflicts and resolve commands)
+- tests/cli/test_conflict_commands.py (new test file)
+
