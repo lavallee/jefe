@@ -4453,3 +4453,46 @@ All feedback loops passed successfully:
    - Dependency injection via FastAPI's `Depends()`
    - Consistent API response schemas
 
+
+## 2026-01-13: Epic sc-d0f - Rename Station Chief to Jefe
+
+### Task Completed
+Successfully completed the comprehensive rename of Station Chief to Jefe across the entire codebase.
+
+### Files Updated (11 total)
+1. `src/jefe/__init__.py` - Package metadata (docstring, author, email)
+2. `src/jefe/server/app.py` - FastAPI app title
+3. `src/jefe/cli/commands/config.py` - CLI configuration table title
+4. `ruff.toml` - Configuration comment
+5. `pyproject.toml` - Author metadata
+6. `Makefile` - Help text
+7. `docker-compose.override.yml.example` - Config directory path comment
+8. `.dockerignore` - Removed old station_chief.db reference
+9. `tests/server/test_health.py` - Updated test assertion for API title
+10. `.beads/issues.jsonl` - Task metadata (auto-updated by bd close)
+11. `.cub/runs/` - Task tracking files (auto-created)
+
+### Key Findings
+- All 12 child tasks of the epic were already completed before this run
+- The epic task itself needed to be closed to mark the entire rename complete
+- Found and fixed remaining references in comments, config files, and test assertions
+- Historical files (progress.txt, .cub/runs/, .beads/) contain old references but don't need updating
+- The "sc" alias in pyproject.toml scripts remains as it's intentionally kept for backwards compatibility
+
+### Validation Results
+- ✓ Type checking (mypy): All 107 source files passed
+- ✓ Tests (pytest): All 628 tests passed
+- ✓ Linting (ruff on src/): Clean
+- Note: Pre-existing linting issues in test files are unrelated to this task
+
+### Pattern Learned
+When completing an epic with child tasks:
+1. Verify all child tasks are closed
+2. Search for remaining references to rename
+3. Update all active code and config files
+4. Skip historical artifact files (progress logs, run metadata)
+5. Run full feedback loop (typecheck, test, lint)
+6. Close the epic task with `bd close`
+7. Sync beads from main with `bd sync --from-main`
+8. Commit with format: `epic(task-id): description`
+
