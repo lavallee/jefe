@@ -329,9 +329,7 @@ def install_skill(
     global_scope: bool = typer.Option(False, "--global", help="Install globally"),
 ) -> None:
     """Install a skill to a harness."""
-    _require_api_key()
-
-    # Validate scope
+    # Validate scope before checking API key
     if global_scope and project:
         console.print("[red]Cannot specify both --global and --project.[/red]")
         raise typer.Exit(code=1)
@@ -339,6 +337,8 @@ def install_skill(
     if not global_scope and not project:
         console.print("[red]Must specify either --global or --project.[/red]")
         raise typer.Exit(code=1)
+
+    _require_api_key()
 
     anyio.run(_install_skill_async, name_or_id, harness, project, global_scope)
 

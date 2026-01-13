@@ -143,7 +143,11 @@ class SkillSourceService:
                 try:
                     repo = Repo(repo_path)
                     origin = repo.remotes.origin
-                    origin.pull()
+                    # Fetch and merge instead of pull to handle missing tracking branch
+                    origin.fetch()
+                    active_branch = repo.active_branch.name
+                    if f"origin/{active_branch}" in [ref.name for ref in repo.refs]:
+                        repo.git.merge(f"origin/{active_branch}")
                     logger.info(f"Pulled updates for {url}")
                 except InvalidGitRepositoryError:
                     # Directory exists but not a valid repo, remove and clone
