@@ -2461,3 +2461,92 @@ Created a complete web interface for viewing harness configurations with the fol
 5. The detail page uses expandable sections to keep initial page load lightweight
 6. Discovery actions redirect back to the page with `HX-Redirect` header for HTMX
 
+
+## Task: sc-042 - TranslationLog model (2026-01-13)
+
+Successfully implemented TranslationLog data model for tracking translation history.
+
+### Implementation Summary
+
+1. **TranslationLog Model** (`src/jefe/data/models/translation_log.py`)
+   - TranslationType enum with values: "syntax", "semantic"
+   - Fields: input_text (Text), output_text (Text), translation_type (Enum), model_name (String), project_id (ForeignKey, optional)
+   - Inherits from BaseModel (provides id, created_at, updated_at)
+   - Bidirectional relationship with Project model
+
+2. **Project Model Update** (`src/jefe/data/models/project.py`)
+   - Added translation_logs relationship with cascade="all, delete-orphan"
+   - Enables application-level cascade deletes when project is deleted
+
+3. **Alembic Migration** (`alembic/versions/404572f4fbfa_add_translation_logs.py`)
+   - Creates translation_logs table with all required columns
+   - Foreign key to projects table with CASCADE delete
+   - Enum column for translation_type
+   - Server-side defaults for timestamps
+
+4. **TranslationLogRepository** (`src/jefe/data/repositories/translation_log.py`)
+   - Standard CRUD operations: create, get_by_id, list_all, update, delete
+   - Custom filters: list_by_type(), list_by_project()
+   - Pagination support (limit, offset)
+   - Follows project repository patterns
+
+5. **Comprehensive Test Suite** (`tests/data/test_translation_log_repo.py`)
+   - 9 tests covering all repository operations
+   - Tests for CRUD, filtering, pagination, cascade delete
+   - All tests pass successfully
+
+### Feedback Loop Results
+
+✓ Type checking: mypy found no issues in 70 source files
+✓ Linting: ruff found no issues
+✓ Tests: All 276 tests pass (including 9 new TranslationLog tests)
+
+### Key Implementation Details
+
+1. **SQLAlchemy Relationship Cascade**
+   - Cascade deletes work via SQLAlchemy relationships, not database constraints
+   - Must define bidirectional relationship with cascade="all, delete-orphan"
+   - Application-level cascade (not database-level) enables proper cleanup
+
+2. **Enum Handling**
+   - String-based enums (str, Enum) for easy serialization
+   - SQLAlchemy Enum uses values_callable for proper value extraction
+   - Lowercase enum values follow project conventions
+
+3. **Optional Foreign Keys**
+   - project_id is nullable for logs not associated with a project
+   - Relationship is typed as Project | None for type safety
+   - Allows global translation logs without project context
+
+4. **Repository Filters**
+   - list_by_type() filters by TranslationType enum
+   - list_by_project() filters by project_id
+   - Both support pagination (limit, offset)
+
+### Acceptance Criteria Verification
+
+✅ TranslationLog table created (via migration)
+✅ Can create and query logs (via repository)
+✅ Tests pass (9 tests, all passing)
+
+### Files Created/Modified
+
+Created:
+- src/jefe/data/models/translation_log.py
+- src/jefe/data/repositories/translation_log.py
+- alembic/versions/404572f4fbfa_add_translation_logs.py
+- tests/data/test_translation_log_repo.py
+
+Modified:
+- src/jefe/data/models/__init__.py (export TranslationLog, TranslationType)
+- src/jefe/data/models/project.py (add translation_logs relationship)
+- src/jefe/data/repositories/__init__.py (export TranslationLogRepository)
+
+### Important Notes
+
+- The project uses "jefe" as the module name, not "station_chief" (task description had old name)
+- SQLite foreign key constraints require PRAGMA foreign_keys=ON, but cascade works via SQLAlchemy relationships
+- Translation logs can be created without a project (project_id is nullable)
+- Model follows all existing patterns: BaseModel inheritance, async repositories, comprehensive tests
+
+The TranslationLog model is now fully functional and ready for use in tracking translation operations.
