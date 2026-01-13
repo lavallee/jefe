@@ -19,10 +19,11 @@ class SkillSpec(BaseModel):
             return v
 
         # Basic validation for common semver patterns
-        # Supports: 1.2.3, ^1.2.3, ~1.2.3, >=1.2.0, etc.
+        # Supports: 1.2.3, ^1.2.3, ~1.2.3, >=1.2.0, >= 1.2.0, etc.
         import re
 
-        pattern = r"^(\^|~|>=|<=|>|<|=)?(\d+)\.(\d+)\.(\d+)(-[\w.]+)?(\+[\w.]+)?$"
+        # Allow optional whitespace after operators
+        pattern = r"^(\^|~|>=|<=|>|<|=)?\s*(\d+)\.(\d+)\.(\d+)(-[\w.]+)?(\+[\w.]+)?$"
         if not re.match(pattern, v):
             raise ValueError(
                 f"Invalid version constraint: {v}. "
