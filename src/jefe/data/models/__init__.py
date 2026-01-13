@@ -5,6 +5,8 @@ from jefe.data.models.harness import Harness
 from jefe.data.models.harness_config import ConfigScope, HarnessConfig
 from jefe.data.models.manifestation import Manifestation, ManifestationType
 from jefe.data.models.project import Project
+from jefe.data.models.skill import Skill
+from jefe.data.models.skill_source import SkillSource, SourceType, SyncStatus
 
 __all__ = [
     "Base",
@@ -14,5 +16,9 @@ __all__ = [
     "Manifestation",
     "ManifestationType",
     "Project",
+    "Skill",
+    "SkillSource",
+    "SourceType",
+    "SyncStatus",
     "TimestampMixin",
 ]

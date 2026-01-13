@@ -5,6 +5,8 @@ from jefe.data.repositories.harness import HarnessRepository
 from jefe.data.repositories.harness_config import HarnessConfigRepository
 from jefe.data.repositories.manifestation import ManifestationRepository
 from jefe.data.repositories.project import ProjectRepository
+from jefe.data.repositories.skill import SkillRepository
+from jefe.data.repositories.skill_source import SkillSourceRepository
 
 __all__ = [
     "BaseRepository",
@@ -12,4 +14,6 @@ __all__ = [
     "HarnessRepository",
     "ManifestationRepository",
     "ProjectRepository",
+    "SkillRepository",
+    "SkillSourceRepository",
 ]
