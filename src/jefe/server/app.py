@@ -55,7 +55,7 @@ def create_app() -> FastAPI:
         Configured FastAPI application ready to serve requests.
     """
     app = FastAPI(
-        title="Station Chief",
+        title="Jefe",
         description="A comprehensive Git repository management system with web and CLI interfaces",
         version=__version__,
         lifespan=lifespan,

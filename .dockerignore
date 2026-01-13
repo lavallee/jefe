@@ -55,7 +55,6 @@ htmlcov/
 .hypothesis/
 
 # Project specific
-station_chief.db
 jefe.db
 data/
 .beads/
