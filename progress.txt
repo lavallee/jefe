@@ -1315,3 +1315,68 @@ sc skills install pdf --harness claude-code --project my-project
 # Uninstall skill
 sc skills uninstall 1
 ```
+
+## Session: 2026-01-13 - sc-026: Skill installation logic
+
+### What Was Done
+- Implemented complete skill installation and uninstallation file operations
+- Added uninstall_skill() method to HarnessAdapter base class
+- Implemented uninstall_skill() in ClaudeCodeAdapter to actually remove files from disk
+- Updated SkillService.uninstall_skill() to call adapter and remove files (previously only deleted DB record)
+- Created comprehensive test suite with 17 tests for skill installation workflows
+
+### Key Implementation Details
+1. **Installation was already complete**: ClaudeCodeAdapter.install_skill() was fully implemented
+   - Copies skill directories to correct locations (global: ~/.claude/skills/, project: .claude/skills/)
+   - Handles updates by removing existing files before copying
+   - Creates parent directories as needed
+   
+2. **Added uninstall capability**:
+   - Base adapter defines abstract uninstall_skill(installed_path: Path) -> bool
+   - ClaudeCodeAdapter implementation removes directories with shutil.rmtree() or files with unlink()
+   - Returns False if path doesn't exist (idempotent)
+
+3. **Updated SkillService**:
+   - uninstall_skill() now gets the harness adapter
+   - Calls adapter.uninstall_skill() to remove files from disk
+   - Removes database record only after files are deleted
+   - Full rollback on errors
+
+### Testing Strategy
+- Created test_skill_service.py with 17 comprehensive tests
+- Mocked Path.home() to use tmp_path for global installs (isolation)
+- Used real file operations to verify actual file copying/removal
+- Tested both global and project-scoped installations
+- Covered error cases: not found, missing project, source not synced, already installed
+- Verified update behavior (existing skills are removed and re-copied)
+
+### Files Created
+- tests/server/test_skill_service.py - 17 comprehensive tests (585 lines)
+
+### Files Modified
+- src/jefe/adapters/base.py - Added abstract uninstall_skill() method
+- src/jefe/adapters/claude_code.py - Implemented uninstall_skill()
+- src/jefe/server/services/skill.py - Updated uninstall_skill() to remove files
+
+### Test Results
+- All 17 tests pass
+- Type checking: ✓ (mypy - clean)
+- Linting: ✓ (ruff - clean)
+- Code coverage: 83% on skill.py, 100% on base.py, 51% on claude_code.py
+
+### Acceptance Criteria Verification
+✅ Skill files copied to correct location
+✅ Global install goes to ~/.claude/skills/
+✅ Project install goes to .claude/skills/
+✅ Existing skills can be updated (files removed and re-copied)
+✅ Uninstall removes files from disk
+✅ Tests pass (17/17 tests passing)
+
+### Key Learnings
+1. **Installation was already implemented**: The task description suggested implementation was needed, but ClaudeCodeAdapter already had complete install_skill() logic
+2. **Path mocking for tests**: Must mock Path.home() to use tmp_path for testing global installs without touching user's home directory
+3. **Fixture parameters**: pytest fixture parameters must match fixture names - can't rename without breaking (use noqa: ARG001 comments)
+4. **Adapter pattern benefits**: Having adapters handle platform-specific operations (file paths, installation) keeps service layer clean
+5. **Test isolation**: Using tmp_path and changing cwd in tests ensures no side effects on actual filesystem
+
+The skill installation and uninstallation logic is now fully implemented and tested, ready for end-to-end integration.
