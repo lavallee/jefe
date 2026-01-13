@@ -227,3 +227,26 @@ async def _show_harness_async(harness_name: str, project_id: int | None) -> None
 
     _render_harness_details(harness_response.json())
     _render_configs(config_response.json(), show_content=True)
+
+
+@harnesses_app.command("adapters")
+def list_available_adapters() -> None:
+    """List available harness adapters."""
+    from jefe.adapters import get_adapters
+
+    adapters = get_adapters()
+
+    if not adapters:
+        console.print("[yellow]No adapters registered.[/yellow]")
+        return
+
+    table = Table(title="Available Adapters", show_header=True, header_style="bold magenta")
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Display Name", style="green")
+    table.add_column("Version", style="yellow")
+
+    for adapter in sorted(adapters, key=lambda a: a.name):
+        table.add_row(adapter.name, adapter.display_name, adapter.version)
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(adapters)} adapter(s)[/dim]")

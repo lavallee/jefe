@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import cast
 
 from jefe.adapters.base import DiscoveredConfig, HarnessAdapter
+from jefe.adapters.registry import register_adapter
 from jefe.data.models.harness_config import ConfigScope
 
 
@@ -251,3 +252,7 @@ class GeminiCliAdapter(HarnessAdapter):
             installed_path.unlink()
 
         return True
+
+
+# Auto-register this adapter when module is imported
+register_adapter(GeminiCliAdapter())

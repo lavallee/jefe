@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 from jefe.adapters.base import ConfigKind, ConfigScope, DiscoveredConfig, HarnessAdapter
+from jefe.adapters.registry import register_adapter
 
 
 class ClaudeCodeAdapter(HarnessAdapter):
@@ -186,3 +187,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
             installed_path.unlink()
 
         return True
+
+
+# Auto-register this adapter when module is imported
+register_adapter(ClaudeCodeAdapter())
