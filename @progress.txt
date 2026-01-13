@@ -64,3 +64,19 @@ Updated test imports to align with current module exports and centralized import
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe`
+
+## Session: sc-E02 - Core Discovery (2026-01-12)
+
+### Summary
+Implemented Phase 2 core discovery with project registry, Claude Code adapter, discovery APIs, and CLI commands.
+
+### Key Updates
+- Added Project and Manifestation models with repositories, migrations, and discovery services.
+- Implemented Claude Code adapter to discover settings, instructions, and skills paths.
+- Added projects/harnesses/status APIs plus CLI commands with tests.
+- Added status endpoint and discovery responses for configs across projects.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe`

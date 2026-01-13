@@ -123,6 +123,7 @@ ruff format src/jefe
 - W503 linting rule was removed in newer ruff versions (removed from pyproject.toml config)
 - Typer's `[all]` extra doesn't exist in version 0.21.1 (uses standard Typer with Click)
 - Virtual environment is created at `.venv/` by uv
+- Alembic CLI needs `PYTHONPATH=src` when running without an editable install
 
 ## Common Commands
 
