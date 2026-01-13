@@ -1136,3 +1136,42 @@ Modified:
 ✅ Tests pass (9 new tests, 135 total)
 
 The Sources API is now fully implemented and ready for use.
+
+## Session: 2026-01-12 - sc-023: Skills API endpoints
+
+### What Was Done
+- Implemented complete Skills API endpoints for browsing and managing skill installations
+- Created skill schemas, service layer, and API router following existing patterns
+- Added comprehensive test coverage with 17 tests covering all endpoints
+- Fixed route ordering issue (GET /api/skills/installed must come before /api/skills/{id})
+- Refactored install_skill() method to reduce complexity below threshold (C901)
+
+### Key Technical Decisions
+1. **Route ordering**: More specific routes (/api/skills/installed) must come before parameterized routes (/api/skills/{id}) to avoid FastAPI path conflicts
+2. **Service complexity**: Extracted _validate_project_scope() helper method to keep install_skill() complexity under 11
+3. **Skill installation**: Service uses harness adapters to handle actual file operations, creating database records for tracking
+4. **Project scope validation**: Installation requires local manifestations for project-scoped installs
+
+### Patterns Learned
+- FastAPI route registration order matters for path matching
+- Service methods should stay under complexity 11 (ruff C901)
+- Helper methods prefixed with _ for internal operations
+- Response converters (_model_to_response) pattern for consistent API responses
+
+### Files Created
+- src/jefe/server/schemas/skill.py - API request/response schemas
+- src/jefe/server/services/skill.py - Business logic for skill management
+- src/jefe/server/api/skills.py - REST API endpoints
+- tests/server/test_skills_api.py - Comprehensive API tests
+
+### Files Modified
+- src/jefe/server/api/__init__.py - Registered skills router
+- src/jefe/server/schemas/__init__.py - Exported skill schemas
+
+### Test Results
+- All 152 tests pass
+- Skills API: 17/17 tests passing
+- Type checking: ✓ (mypy)
+- Linting: ✓ (ruff)
+- Code coverage: 78% overall
+
