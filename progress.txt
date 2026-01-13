@@ -2164,3 +2164,141 @@ All checks pass successfully:
 - Cache statistics for better performance
 
 The dashboard provides a solid foundation for the web UI and demonstrates proper patterns for future pages.
+
+## Session - Task: sc-037 - Projects list and detail pages
+
+Successfully implemented comprehensive web pages for viewing and managing projects with full CRUD operations.
+
+### Implementation Summary
+
+1. **Projects List Page** (`src/jefe/web/templates/projects/list.html`)
+   - Responsive table displaying projects with name, description, manifestation count, last seen
+   - Empty state with helpful messaging and call-to-action
+   - "Add Project" button using htmx to load modal form
+   - Last seen calculation from most recent manifestation timestamp
+   - List route fetches projects with selectinload for manifestations
+
+2. **Project Detail Page** (`src/jefe/web/templates/projects/detail.html`)
+   - Breadcrumb navigation back to projects list
+   - Edit and Delete buttons with htmx actions
+   - Tabbed interface for Manifestations and Harness Configs
+   - Manifestations tab shows type badges (local/remote), paths, machine IDs, timestamps
+   - Add/Remove manifestation buttons with htmx and confirmation dialogs
+   - Configs tab displays discovered harness configurations
+   - JavaScript for tab switching between sections
+
+3. **Project Form Modal** (`src/jefe/web/templates/projects/_form.html`)
+   - Reusable form for both create and edit operations
+   - Fields: name (required), description (optional), initial path (create only)
+   - Modal overlay with background click to close
+   - Form uses hx-post or hx-put based on context
+   - Initial path automatically creates first manifestation
+
+4. **Manifestation Form Modal** (`src/jefe/web/templates/projects/_manifestation_form.html`)
+   - Type selector (local/remote)
+   - Path input for filesystem path or URL
+   - Optional machine ID field
+   - Uses hx-post to add manifestation
+
+5. **Backend Route Handlers** (`src/jefe/web/routes.py`)
+   - Added imports: datetime, Form, HTTPException, RedirectResponse, selectinload
+   - Added ManifestationType, ManifestationRepository, ProjectRepository
+   - Comprehensive CRUD operations:
+     - `GET /projects` - List with manifestations preloaded
+     - `GET /projects/new` - Render form
+     - `POST /projects` - Create with optional initial manifestation
+     - `GET /projects/{id}` - Detail with manifestations and configs
+     - `GET /projects/{id}/edit` - Render edit form
+     - `PUT /projects/{id}` - Update project
+     - `DELETE /projects/{id}` - Delete with cascade
+     - `GET /projects/{id}/manifestations/new` - Render form
+     - `POST /projects/{id}/manifestations` - Create manifestation
+     - `DELETE /projects/{id}/manifestations/{id}` - Remove manifestation
+
+### Technical Details
+
+**Database Queries:**
+- Used `selectinload(Project.manifestations)` for efficient eager loading
+- Calculated last_seen by finding max timestamp across manifestations
+- Fetched harness configs with simple where clause
+- All operations use repository pattern with proper error handling
+
+**Form Handling:**
+- FastAPI Form(...) for required fields, Form(None) for optional
+- POST/PUT/DELETE handlers return RedirectResponse with HX-Redirect header
+- htmx automatically follows redirect and updates page
+- Manifestation type determined from path (http/https = remote, else local)
+- Timestamps set to datetime.now() on creation
+
+**Modal Pattern:**
+- Fixed overlay with z-index for stacking
+- Background click closes modal (sets innerHTML to empty)
+- Forms embedded in modal container div
+- HX-Redirect triggers page refresh after successful submission
+
+**HTMX Integration:**
+- hx-get loads forms into #modal-container
+- hx-post/hx-put/hx-delete for mutations
+- hx-confirm for delete confirmations
+- hx-target and hx-swap for element replacement
+- HX-Redirect header forces full page reload after mutations
+
+### Acceptance Criteria Verification
+
+✅ /projects shows list of projects
+✅ Can add project via web form
+✅ /projects/{id} shows project details
+✅ Can add/remove manifestations
+✅ Can delete project
+
+### Feedback Loop Results
+
+All checks pass successfully:
+- ✓ Type checking: mypy found no issues in 68 source files
+- ✓ Linting: ruff found no issues (removed unused imports and request parameters)
+- ✓ Tests: 267 passed, 80% coverage overall
+
+### Files Created/Modified
+
+**Created:**
+- `src/jefe/web/templates/projects/list.html` - Projects list with table
+- `src/jefe/web/templates/projects/detail.html` - Project detail with tabs
+- `src/jefe/web/templates/projects/_form.html` - Project create/edit modal
+- `src/jefe/web/templates/projects/_manifestation_form.html` - Add manifestation modal
+
+**Modified:**
+- `src/jefe/web/routes.py` - Added 11 new route handlers for projects and manifestations
+
+### Key Learnings
+
+1. **Repository Pattern with Relationships**: The `get_with_manifestations()` method using `selectinload` is crucial for avoiding N+1 queries when displaying related data.
+
+2. **Form Parameter Handling**: FastAPI's `Form(...)` and `Form(None)` pattern works cleanly for required and optional fields. The `request` parameter is not needed if you're not using it.
+
+3. **HTMX Redirect Pattern**: For POST/PUT/DELETE operations, returning a `RedirectResponse` with an `HX-Redirect` header tells htmx to perform a full page navigation after the operation completes.
+
+4. **Modal Management**: Using a dedicated `#modal-container` div and clearing its innerHTML provides a simple way to show/hide modals without complex JavaScript state management.
+
+5. **Computed Fields in Templates**: Calculating last_seen from manifestations in the route handler (rather than trying to do it in SQL) keeps the query simple and allows for flexible date handling.
+
+6. **Tab Switching with Plain JavaScript**: For simple tab interfaces, vanilla JavaScript with classList manipulation is sufficient - no need for complex frameworks.
+
+7. **Type Detection**: Simple string checks (`path.startswith(("http://", "https://"))`) are effective for determining manifestation type from user input.
+
+8. **Delete Confirmation**: htmx's `hx-confirm` attribute provides a clean way to add confirmation dialogs without custom JavaScript.
+
+9. **Empty State Design**: Showing helpful empty states with icons and call-to-action buttons improves UX when there's no data.
+
+10. **Cascade Deletes**: SQLAlchemy's cascade="all, delete-orphan" ensures manifestations are deleted when a project is deleted, maintaining referential integrity.
+
+### Future Enhancements
+
+- Add search/filter functionality to projects list
+- Add pagination for large project lists
+- Add project cloning functionality
+- Show project activity timeline
+- Add bulk operations (select multiple projects)
+- Add project tags/labels for organization
+- Export project data to JSON/YAML
+
+The projects pages provide full CRUD functionality with a clean, modern interface following established patterns from the dashboard implementation.
