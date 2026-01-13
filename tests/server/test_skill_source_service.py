@@ -169,9 +169,9 @@ class TestSkillSourceService:
         working_git.create_remote("origin", str(source_repo))
         working_git.remotes.origin.push("main:main")
 
-        # Clone to destination
+        # Clone to destination (explicitly specify branch to handle CI environments)
         dest_repo = tmp_path / "dest"
-        Repo.clone_from(str(source_repo), str(dest_repo))
+        Repo.clone_from(str(source_repo), str(dest_repo), branch="main")
 
         # Add another file to source
         (working_clone / "file2.txt").write_text("content 2")
