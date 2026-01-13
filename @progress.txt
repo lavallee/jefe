@@ -478,3 +478,62 @@ The translation API is ready for integration with:
 - Bulk translation operations across projects
 - Translation history viewing and management
 
+
+## Task sc-053: Sync CLI Commands (2026-01-13)
+
+### Implementation Summary
+Created complete sync CLI command suite for manual sync control between local cache and server.
+
+### Key Implementation Details
+1. **Command Structure**:
+   - Used Typer callback with `invoke_without_command=True` for default sync command
+   - Registered four commands: status, push, pull, and default sync
+   - All commands require API key and check online status
+
+2. **Sync Protocol Integration**:
+   - Leveraged existing SyncProtocol class from src/jefe/cli/sync/protocol.py
+   - Protocol handles push/pull operations with conflict detection
+   - Last-write-wins conflict resolution based on timestamps
+
+3. **Rich Console Output**:
+   - Progress messages with colored status indicators
+   - Detailed conflict tables showing entity type, IDs, and resolution
+   - Pending changes table with counts and sample items
+   - Graceful offline mode handling
+
+4. **Testing Pattern**:
+   - Used AsyncMock for async functions (is_online, protocol methods)
+   - Mocked SyncProtocol and CacheManager for isolation
+   - Created mock project/skill classes for status tests
+   - 19 comprehensive tests with 93% code coverage
+
+5. **CLI Patterns Followed**:
+   - Async implementation with anyio.run() wrapper
+   - Helper functions: _require_api_key(), _render_*()
+   - Consistent error handling with typer.Exit(code=1)
+   - Online/offline detection before operations
+
+### Learnings
+- Typer's `callback(invoke_without_command=True)` pattern allows default command behavior
+- Must check `ctx.invoked_subcommand is None` to avoid double execution
+- AsyncMock required for mocking async functions in tests
+- Rich tables provide excellent UX for complex data display
+- SyncResult dataclass provides clean separation between protocol and CLI
+
+### Test Coverage
+- 19 tests covering all commands and edge cases
+- Status: online/offline, with/without changes
+- Push/Pull: success, failure, conflicts, no changes
+- Full sync: all combinations of push/pull results
+- API key validation for all commands
+
+### Files Modified
+- src/jefe/cli/commands/sync.py (new, 257 lines)
+- src/jefe/cli/app.py (import and register sync_app)
+- tests/cli/test_sync_commands.py (new, 494 lines)
+
+### Quality Metrics
+- Type checking: Clean (mypy)
+- Linting: Clean (ruff)
+- Tests: 19/19 passing
+- Code coverage: 93%
