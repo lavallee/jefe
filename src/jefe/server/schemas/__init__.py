@@ -10,6 +10,11 @@ from jefe.server.schemas.projects import (
     ProjectResponse,
     ProjectUpdate,
 )
+from jefe.server.schemas.skill import (
+    InstalledSkillResponse,
+    SkillInstallRequest,
+    SkillResponse,
+)
 from jefe.server.schemas.source import SourceCreate, SourceResponse, SyncResponse
 from jefe.server.schemas.status import StatusResponse
 
@@ -18,6 +23,7 @@ __all__ = [
     "HarnessConfigResponse",
     "HarnessResponse",
     "HealthResponse",
+    "InstalledSkillResponse",
     "ManifestationCreate",
     "ManifestationResponse",
     "MessageResponse",
@@ -25,6 +31,8 @@ __all__ = [
     "ProjectDetailResponse",
     "ProjectResponse",
     "ProjectUpdate",
+    "SkillInstallRequest",
+    "SkillResponse",
     "SourceCreate",
     "SourceResponse",
     "StatusResponse",
