@@ -11,6 +11,7 @@ from jefe.data.models.base import BaseModel
 
 if TYPE_CHECKING:
     from jefe.data.models.manifestation import Manifestation
+    from jefe.data.models.translation_log import TranslationLog
 
 
 class Project(BaseModel):
@@ -25,4 +26,9 @@ class Project(BaseModel):
         back_populates="project",
         cascade="all, delete-orphan",
         order_by="Manifestation.id",
+    )
+    translation_logs: Mapped[list[TranslationLog]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="TranslationLog.id",
     )

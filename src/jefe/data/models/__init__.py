@@ -8,6 +8,7 @@ from jefe.data.models.manifestation import Manifestation, ManifestationType
 from jefe.data.models.project import Project
 from jefe.data.models.skill import Skill
 from jefe.data.models.skill_source import SkillSource, SourceType, SyncStatus
+from jefe.data.models.translation_log import TranslationLog, TranslationType
 
 __all__ = [
     "Base",
@@ -24,4 +25,6 @@ __all__ = [
     "SourceType",
     "SyncStatus",
     "TimestampMixin",
+    "TranslationLog",
+    "TranslationType",
 ]

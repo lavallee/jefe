@@ -8,6 +8,7 @@ from jefe.data.repositories.manifestation import ManifestationRepository
 from jefe.data.repositories.project import ProjectRepository
 from jefe.data.repositories.skill import SkillRepository
 from jefe.data.repositories.skill_source import SkillSourceRepository
+from jefe.data.repositories.translation_log import TranslationLogRepository
 
 __all__ = [
     "BaseRepository",
@@ -18,4 +19,5 @@ __all__ = [
     "ProjectRepository",
     "SkillRepository",
     "SkillSourceRepository",
+    "TranslationLogRepository",
 ]
