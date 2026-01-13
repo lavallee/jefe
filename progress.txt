@@ -2411,3 +2411,53 @@ task(sc-038): Skills browser
 ```
 
 Full-featured skills browser implementation with live search, filtering, and installation modal.
+
+## Session: 2026-01-13 - Harness Config Viewer (sc-039)
+
+### Implementation Summary
+Created a complete web interface for viewing harness configurations with the following features:
+
+**New Files Created:**
+- `src/jefe/web/templates/harnesses/list.html` - Shows all harnesses with config counts in a card grid
+- `src/jefe/web/templates/harnesses/detail.html` - Shows harness details with configs grouped by scope
+- `src/jefe/web/templates/components/code_viewer.html` - Reusable component for syntax-highlighted code display
+
+**Modified Files:**
+- `src/jefe/web/routes.py` - Added 4 new routes for harness list, detail, and discovery
+- `src/jefe/web/templates/base.html` - Added "Harnesses" to navigation menu
+
+**Key Features:**
+1. Harness list page with config counts displayed as cards
+2. Detail page with separate sections for global and project configs
+3. Expandable config content with syntax highlighting using highlight.js
+4. "Refresh Discovery" buttons (with loading spinners) to trigger config discovery
+5. Proper error handling and 404 responses for missing harnesses
+6. Breadcrumb navigation on detail page
+7. Project linking for project-scoped configs
+
+**Technical Patterns Used:**
+- HTMX for discovery action with loading indicators (`hx-indicator`)
+- Client-side JavaScript for toggling config content visibility
+- Lazy syntax highlighting (only when content is shown)
+- ConfigScope enum for filtering global vs project configs
+- Async repository pattern for database operations
+
+**Testing:**
+- All 267 existing tests passed
+- Type checking passed (mypy)
+- Linting passed (ruff)
+
+**Integration Notes:**
+- Uses existing `HarnessRepository` and `HarnessConfigRepository`
+- Leverages `discover_all()` and `discover_for_harness()` from services
+- Follows existing template patterns from projects and skills pages
+- Maintains consistency with project's Tailwind CSS styling
+
+### Learnings
+1. The project uses highlight.js for syntax highlighting (CDN approach)
+2. Discovery services are in `jefe.server.services.discovery`
+3. HTMX indicators use `.htmx-indicator` class for show/hide behavior
+4. Config content can be JSON, Markdown, YAML, or TOML - handled via file extension
+5. The detail page uses expandable sections to keep initial page load lightweight
+6. Discovery actions redirect back to the page with `HX-Redirect` header for HTMX
+
