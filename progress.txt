@@ -2878,3 +2878,37 @@ The translation web UI is now fully functional and provides an intuitive interfa
 
 ### Phase 6 Complete
 All translation features (API, CLI, Web UI) have been successfully implemented and tested. The checkpoint task sc-048 was closed as all acceptance criteria are met. Ready to proceed to Phase 7 (offline support).
+
+## Session 2026-01-13 - CLI Local Cache Schema (sc-049)
+
+### Implementation Summary
+- Created `src/jefe/cli/cache/` module for offline CLI operation
+- Implemented SQLite-based local cache with sync metadata
+- Cache stored in XDG-compliant location: `~/.config/jefe/cache.db`
+
+### Key Design Decisions
+1. **Separate Base Class**: Used `CacheBase` instead of reusing server's `BaseModel` to avoid coupling
+2. **Nullable Foreign Keys**: Made FK fields nullable in cache (e.g., `source_id`, `harness_id`) since related entities might not be cached
+3. **Sync Metadata Mixin**: Created `SyncMixin` with `last_synced`, `dirty`, and `server_id` fields for all cached entities
+4. **Mirror Server Schema**: Cached models closely mirror server models (Project, Skill, InstalledSkill, HarnessConfig)
+5. **JSON Helpers**: Included `get_tags_list()`/`set_tags_list()` and metadata helpers in CachedSkill
+
+### Files Created
+- `src/jefe/cli/cache/__init__.py` - Public API exports
+- `src/jefe/cli/cache/models.py` - SQLAlchemy models with sync metadata
+- `src/jefe/cli/cache/database.py` - Database initialization and session management
+- `tests/cli/cache/test_models.py` - Model tests (17 test cases)
+- `tests/cli/cache/test_database.py` - Database management tests
+
+### Testing
+- All 17 cache tests pass
+- Full test suite: 388 tests pass
+- Type checking: mypy clean on 80 files
+- Linting: ruff clean
+
+### Technical Notes
+- Used `init_cache_db()` for schema creation (no Alembic for local cache)
+- Cache database is created on first use with `CacheBase.metadata.create_all()`
+- Resource warnings in tests are normal for SQLite in-memory databases
+- Enum types (InstallScope, ConfigScope) reused from server models for consistency
+
