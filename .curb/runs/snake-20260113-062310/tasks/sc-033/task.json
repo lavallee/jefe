@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-033",
+  "title": "Adapter registration system",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T11:47:03Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T11:54:44Z",
+  "exit_code": 0
+}
