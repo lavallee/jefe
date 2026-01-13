@@ -1517,3 +1517,81 @@ Successfully implemented a complete harness adapter for OpenAI's Codex CLI with 
 - Ready for use in production skill installation workflows
 
 The Codex CLI adapter is now fully functional and ready for Phase 4 completion.
+## Session: 2026-01-13 - sc-030: Gemini CLI adapter
+
+### What Was Done
+Successfully implemented a complete harness adapter for Google's Gemini CLI with comprehensive test coverage based on research from sc-029.
+
+### Implementation Summary
+1. **GeminiCliAdapter (src/jefe/adapters/gemini_cli.py)**
+   - Implements HarnessAdapter interface for Gemini CLI
+   - Global config discovery: ~/.gemini/ (settings.json, GEMINI.md, commands/)
+   - Project config discovery: .gemini/ and GEMINI.md at project root
+   - Multi-format parsing: JSON (settings), TOML (commands), Markdown (instructions)
+   - Skills installation: ~/.gemini/commands (global), .gemini/commands (project)
+   - Full install/uninstall support with directory and file handling
+
+2. **Configuration Discovery Pattern**
+   - Follows Gemini CLI conventions from official Google documentation
+   - Global: ~/.gemini/settings.json, GEMINI.md, commands/
+   - Project: .gemini/settings.json, GEMINI.md at root, .gemini/commands/
+   - Custom commands stored as TOML files in commands/ directory
+   - Returns empty list when config directories don't exist
+
+3. **Comprehensive Test Suite (tests/adapters/test_gemini_cli.py)**
+   - 19 tests with 96% code coverage on gemini_cli.py
+   - Tests for adapter properties, config discovery (global/project)
+   - Tests for multi-format parsing (JSON, TOML, Markdown) with fallbacks
+   - Tests for skills path resolution and installation/uninstallation
+   - Tests for error handling and edge cases
+
+### Key Technical Decisions
+1. **Skills as Commands**: Gemini CLI uses "commands" directory for custom slash commands (skills)
+2. **JSON Settings**: Uses nested JSON structure for configuration (theme, model, experimental.skills)
+3. **TOML Commands**: Custom commands defined as .toml files with prompt and description
+4. **Type Safety**: Used cast() for JSON/TOML parsing to satisfy mypy's return type requirements
+5. **Error Handling**: Graceful fallback to plain text for invalid JSON/TOML
+
+### Patterns Learned
+1. **Adapter Registration**: Import and register in src/jefe/adapters/__init__.py
+2. **DiscoveredConfig Structure**: Use harness name, scope, kind, path, content
+3. **Config Parsing**: Return dict[str, object] for structured data, str for text
+4. **Skills Management**: Commands directory acts as skills directory for Gemini CLI
+5. **Testing Adapters**: Mock Path.home() with tmp_path, test both global and project scopes
+
+### Files Created
+- src/jefe/adapters/gemini_cli.py - Gemini CLI adapter implementation (253 lines)
+- tests/adapters/test_gemini_cli.py - Comprehensive test suite (19 tests, 253 lines)
+- tests/adapters/fixtures/gemini_cli/settings.json - Test fixture
+- tests/adapters/fixtures/gemini_cli/GEMINI.md - Test fixture
+- tests/adapters/fixtures/gemini_cli/test.toml - Test fixture
+
+### Files Modified
+- src/jefe/adapters/__init__.py - Registered GeminiCliAdapter
+
+### Test Results
+- All 50 adapter tests pass (19 new Gemini CLI tests, 21 Codex CLI tests, 9 Claude Code tests, 1 registry test)
+- Type checking: ✓ (mypy - clean)
+- Linting: ✓ (ruff - clean)
+- Code coverage: 96% on gemini_cli.py
+
+### Acceptance Criteria Verification
+✅ Discovers Gemini CLI configs (settings.json, GEMINI.md, commands/)
+✅ Parses config format correctly (JSON, TOML, Markdown)
+✅ Can install skills to commands/ directory
+✅ Tests pass (19/19 tests passing with 96% coverage)
+
+### Key Learnings
+1. **Gemini CLI Structure**: Uses commands/ for skills (custom slash commands), hierarchical JSON config
+2. **Research-Driven Development**: sc-029 research provided accurate documentation of Gemini CLI paths
+3. **Config Hierarchy**: Gemini CLI has 4-level config hierarchy (system defaults, user settings, project settings, system settings)
+4. **TOML for Commands**: Custom commands use TOML format with prompt and description fields
+5. **Test Fixtures**: Created fixture files matching actual Gemini CLI config format
+
+### Integration Notes
+- Gemini CLI adapter is now automatically discovered by harness service
+- Skills can be installed as custom commands in Gemini CLI
+- Follows same adapter pattern as ClaudeCodeAdapter and CodexCliAdapter
+- Ready for use in production skill installation workflows
+
+The Gemini CLI adapter is now fully functional and completes Phase 4 multi-harness support.
