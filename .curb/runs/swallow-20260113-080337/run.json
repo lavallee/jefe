@@ -38,5 +38,6 @@
     "hooks": {
       "enabled": true
     }
-  }
+  },
+  "tasks_completed": 1
 }
