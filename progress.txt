@@ -1731,3 +1731,144 @@ The adapter implements a simple but effective JSONC comment stripper:
 - OpenCode harness will be automatically seeded in database on server startup
 
 The OpenCode adapter is now fully functional and completes the multi-harness skill management system.
+## Session: 2026-01-13 - sc-033: Adapter registration system
+
+### What Was Done
+- Implemented automatic adapter discovery and registration system
+- Updated registry.py with auto-discovery mechanism using pkgutil and importlib
+- Modified all 4 adapter modules to auto-register on import
+- Added 'sc harnesses adapters' CLI command to list available adapters
+- Created comprehensive test suite with 12 tests covering all registration scenarios
+- All acceptance criteria met with 100% code coverage on registry.py
+
+### Implementation Summary
+
+1. **Auto-Discovery Registry (src/jefe/adapters/registry.py)**
+   - Added _ensure_auto_discovery() that runs once on first access
+   - _auto_discover_adapters() uses pkgutil.iter_modules() to find adapter modules
+   - Imports each adapter module to trigger self-registration
+   - Uses contextlib.suppress(Exception) for graceful handling of import failures
+   - Lazy loading: discovery only happens when get_adapter() or list_adapters() is called
+
+2. **Adapter Module Registration**
+   - Each adapter (claude_code, codex_cli, gemini_cli, opencode) imports register_adapter at top
+   - Auto-registers by calling register_adapter(AdapterClass()) at module bottom
+   - Removed manual registration from adapters/__init__.py
+   - Import statement at top of file to avoid E402 linting error
+
+3. **CLI Command (sc harnesses adapters)**
+   - Added harnesses_app.command("adapters") to list_available_adapters()
+   - Displays table with adapter name, display name, and version
+   - Sorts adapters alphabetically by name
+   - Shows total count at bottom
+
+4. **Test Suite (tests/adapters/test_registration.py)**
+   - TestAdapterAutoDiscovery: 8 tests for auto-discovery functionality
+   - TestManualRegistration: 2 tests for manual registration API
+   - TestAdapterDiscovery: 2 tests for discovery mechanism itself
+   - Tests verify all 4 adapters registered, unique names, required properties/methods
+   - Tests verify lazy loading and caching behavior
+
+### Key Technical Decisions
+
+1. **Lazy Auto-Discovery**: Discovery only happens on first get_adapter()/list_adapters() call
+   - Prevents import side effects when adapters module is imported
+   - Improves startup time by deferring discovery until needed
+   - Uses _AUTO_DISCOVERED flag to ensure discovery runs exactly once
+
+2. **Module Import for Registration**: Each adapter module self-registers on import
+   - Simpler than entry points or explicit registration lists
+   - Follows "batteries included" philosophy - just add a new adapter file
+   - Import statement at top, registration call at bottom to satisfy linting
+
+3. **Graceful Import Failures**: Uses contextlib.suppress(Exception) for failed imports
+   - Allows development of new adapters without breaking existing code
+   - Skips adapters with missing dependencies or syntax errors
+   - Silent failures prevent noise during normal operation
+
+4. **CLI Integration**: New command under harnesses subcommand group
+   - Follows existing pattern: sc harnesses {list, discover, show, adapters}
+   - Lists adapters without requiring API key (reads from registry directly)
+   - Useful for debugging adapter registration issues
+
+### Patterns Learned
+
+1. **Python Module Discovery**: pkgutil.iter_modules() for finding modules in a package
+   - Takes list of package directory paths as parameter
+   - Returns ModuleInfo objects with name, ispkg, and module_finder
+   - Skip __init__, base, and registry modules to avoid circular imports
+
+2. **Lazy Initialization**: Global flag + function wrapper pattern
+   - _AUTO_DISCOVERED = False tracks initialization state
+   - _ensure_auto_discovery() checks flag and runs discovery if needed
+   - Called at entry points (get_adapter, list_adapters) before accessing registry
+
+3. **Self-Registering Modules**: Module-level code for side effects
+   - Import registry at top of module
+   - Define class in middle of module
+   - Call register_adapter() at bottom after class is defined
+   - Python executes top-to-bottom, so registration happens when module loads
+
+4. **Test Strategy for Global State**: Tests verify state management
+   - test_auto_discovery_only_runs_once checks _AUTO_DISCOVERED flag
+   - test_registry_state_preserved verifies caching works
+   - Tests import fresh modules to verify auto-registration
+
+### Files Created
+- tests/adapters/test_registration.py - Comprehensive test suite (12 tests, 185 lines)
+
+### Files Modified
+- src/jefe/adapters/registry.py - Added auto-discovery mechanism
+- src/jefe/adapters/__init__.py - Removed manual registration calls
+- src/jefe/adapters/claude_code.py - Added auto-registration
+- src/jefe/adapters/codex_cli.py - Added auto-registration
+- src/jefe/adapters/gemini_cli.py - Added auto-registration
+- src/jefe/adapters/opencode.py - Added auto-registration
+- src/jefe/cli/commands/harnesses.py - Added adapters command
+
+### Test Results
+- All 267 tests pass (12 new registration tests)
+- Type checking: ✓ (mypy - 67 source files, clean)
+- Linting: ✓ (ruff - clean on new code, pre-existing warnings in other files)
+- Code coverage: 100% on registry.py, 96% on adapter modules, 82% overall
+
+### Acceptance Criteria Verification
+✅ All 4 adapters auto-registered (verified via get_adapters())
+✅ Can list adapters via CLI (sc harnesses adapters)
+✅ Harness table synced with registered adapters (HarnessService.seed_harnesses())
+✅ Tests pass (12/12 tests passing with 100% registry coverage)
+
+### Key Learnings
+
+1. **pkgutil vs importlib.resources**: pkgutil.iter_modules() is the right tool for discovering modules
+   - importlib.resources is for package data files, not Python modules
+   - pkgutil has been stable since Python 2.3, widely used for plugin systems
+
+2. **Import Side Effects Best Practice**: Module-level registration is acceptable for plugins
+   - Common pattern in plugin architectures (SQLAlchemy, Flask extensions)
+   - Alternative would be entry points (setuptools), but adds complexity
+   - Self-registration is simpler and more explicit
+
+3. **Lazy vs Eager Loading Trade-offs**:
+   - Lazy: Better startup time, defers errors until first use
+   - Eager: Fails fast, discovers issues at import time
+   - Chose lazy to keep imports fast, errors are rare with stable adapters
+
+4. **Testing Global State**: Verify initialization happens exactly once
+   - Check global flags to ensure state management works
+   - Test both first access and subsequent access patterns
+   - Verify caching works by comparing results across calls
+
+5. **Linting E402 Module Import Location**: Imports must be at top of file
+   - Can't have module-level code then import then more code
+   - Solution: Import at top, use it at bottom
+   - Alternative: Use if TYPE_CHECKING guards, but complicates registration
+
+### Integration Notes
+- Adapter registration now fully automatic - just add new adapter file
+- HarnessService.seed_harnesses() already called on server startup (app.py)
+- CLI command provides visibility into registered adapters for debugging
+- Registry supports both auto-discovery and manual registration for testing
+- Pattern ready for future adapters (Cursor, Aider, etc.)
+
+The adapter registration system is complete and provides a robust foundation for managing multiple harness adapters.
