@@ -12,12 +12,17 @@ from sqlalchemy.orm import selectinload
 
 from jefe.data.database import get_session
 from jefe.data.models.harness_config import HarnessConfig
-from jefe.data.models.installed_skill import InstalledSkill
+from jefe.data.models.installed_skill import InstalledSkill, InstallScope
 from jefe.data.models.manifestation import ManifestationType
 from jefe.data.models.project import Project
+from jefe.data.models.skill import Skill
 from jefe.data.models.skill_source import SkillSource, SyncStatus
+from jefe.data.repositories.harness import HarnessRepository
 from jefe.data.repositories.manifestation import ManifestationRepository
 from jefe.data.repositories.project import ProjectRepository
+from jefe.data.repositories.skill import SkillRepository
+from jefe.data.repositories.skill_source import SkillSourceRepository
+from jefe.server.services.skill import SkillInstallError, SkillService
 
 # Get the directory of the current file
 CURRENT_DIR = Path(__file__).parent
@@ -453,20 +458,213 @@ async def manifestations_delete(
 
 
 @web_router.get("/skills", response_class=HTMLResponse)
-async def skills(request: Request) -> HTMLResponse:
+async def skills_browser(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
     """
-    Render the skills page.
+    Render the skills browser page.
 
     Args:
         request: FastAPI request object
+        session: Database session
 
     Returns:
-        Rendered HTML response (placeholder for now)
+        Rendered HTML response with skills browser
     """
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "messages": [{"type": "info", "text": "Skills page coming soon!"}]},
+    source_repo = SkillSourceRepository(session)
+
+    # Fetch all skills with their sources
+    result = await session.execute(
+        select(Skill)
+        .options(selectinload(Skill.source))
+        .order_by(Skill.name)
     )
+    skills_data = result.scalars().all()
+
+    # Fetch all sources for filter dropdown
+    sources = await source_repo.list_all()
+
+    # Get all installed skill IDs to mark them in the UI
+    installed_result = await session.execute(select(InstalledSkill.skill_id))
+    installed_skill_ids = set(installed_result.scalars().all())
+
+    return templates.TemplateResponse(
+        "skills/browser.html",
+        {
+            "request": request,
+            "skills": skills_data,
+            "sources": sources,
+            "installed_skill_ids": installed_skill_ids,
+        },
+    )
+
+
+@web_router.get("/skills/search", response_class=HTMLResponse)
+async def skills_search(
+    request: Request,
+    search: str | None = None,
+    source_filter: str | None = None,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """
+    Search and filter skills (htmx endpoint).
+
+    Args:
+        request: FastAPI request object
+        search: Search query (name or tag)
+        source_filter: Source ID filter
+        session: Database session
+
+    Returns:
+        Rendered HTML fragment with filtered skills
+    """
+    # Build query based on filters
+    query = select(Skill).options(selectinload(Skill.source))
+
+    # Apply source filter
+    if source_filter:
+        try:
+            source_id = int(source_filter)
+            query = query.where(Skill.source_id == source_id)
+        except ValueError:
+            pass
+
+    # Apply search filter (search in name, display_name, description, and tags)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            (Skill.name.ilike(search_pattern))
+            | (Skill.display_name.ilike(search_pattern))
+            | (Skill.description.ilike(search_pattern))
+            | (Skill.tags.ilike(search_pattern))
+        )
+
+    query = query.order_by(Skill.name)
+
+    result = await session.execute(query)
+    skills_data = result.scalars().all()
+
+    # Get installed skill IDs
+    installed_result = await session.execute(select(InstalledSkill.skill_id))
+    installed_skill_ids = set(installed_result.scalars().all())
+
+    # Render just the grid content
+    if skills_data:
+        cards_html = ""
+        for skill in skills_data:
+            card_html = templates.get_template("skills/_card.html").render(
+                request=request,
+                skill=skill,
+                installed_skill_ids=installed_skill_ids,
+            )
+            cards_html += card_html
+        return HTMLResponse(
+            content=f'<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">{cards_html}</div>'
+        )
+    else:
+        return HTMLResponse(
+            content="""
+            <div class="bg-white shadow rounded-lg border border-gray-200 py-12">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">No skills found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filters.</p>
+                </div>
+            </div>
+            """
+        )
+
+
+@web_router.get("/skills/install/{skill_id}", response_class=HTMLResponse)
+async def skills_install_form(
+    request: Request,
+    skill_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """
+    Render the skill installation modal.
+
+    Args:
+        request: FastAPI request object
+        skill_id: Skill ID to install
+        session: Database session
+
+    Returns:
+        Rendered HTML response with installation form
+    """
+    skill_repo = SkillRepository(session)
+    harness_repo = HarnessRepository(session)
+    project_repo = ProjectRepository(session)
+
+    # Get the skill
+    skill = await skill_repo.get_with_source(skill_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+
+    # Get all harnesses
+    harnesses = await harness_repo.list_all()
+
+    # Get all projects
+    projects = await project_repo.list_all()
+
+    return templates.TemplateResponse(
+        "skills/_install_modal.html",
+        {
+            "request": request,
+            "skill": skill,
+            "harnesses": harnesses,
+            "projects": projects,
+        },
+    )
+
+
+@web_router.post("/skills/install")
+async def skills_install(
+    skill_id: int = Form(...),
+    harness_id: int = Form(...),
+    scope: str = Form(...),
+    project_id: int | None = Form(None),
+    session: AsyncSession = Depends(get_session),
+) -> RedirectResponse:
+    """
+    Install a skill.
+
+    Args:
+        skill_id: Skill ID to install
+        harness_id: Harness ID to install to
+        scope: Installation scope (global or project)
+        project_id: Project ID (required for project scope)
+        session: Database session
+
+    Returns:
+        Redirect to skills browser
+    """
+    skill_service = SkillService(session)
+
+    # Convert scope string to enum
+    install_scope = InstallScope.GLOBAL if scope == "global" else InstallScope.PROJECT
+
+    try:
+        await skill_service.install_skill(
+            skill_id=skill_id,
+            harness_id=harness_id,
+            scope=install_scope,
+            project_id=project_id,
+        )
+
+        # Return redirect response with HX-Redirect header for htmx
+        response = RedirectResponse(url="/skills", status_code=303)
+        response.headers["HX-Redirect"] = "/skills"
+        return response
+
+    except SkillInstallError:
+        # For now, just redirect back with error (could enhance with flash messages)
+        response = RedirectResponse(url="/skills", status_code=303)
+        response.headers["HX-Redirect"] = "/skills"
+        return response
 
 
 @web_router.get("/sources", response_class=HTMLResponse)
