@@ -40,7 +40,12 @@ async def translate_content(
     _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> TranslateResponse:
-    """Translate content between harness formats."""
+    """Translate content between harness formats.
+
+    Supports two translation types:
+    - syntax: Rule-based translation (fast, deterministic)
+    - semantic: LLM-powered translation (adapts prompting style)
+    """
     service = TranslationService(session)
 
     try:
@@ -52,6 +57,8 @@ async def translate_content(
             target_harness=payload.target_harness,  # type: ignore[arg-type]
             config_kind=payload.config_kind,
             project_id=payload.project_id,
+            translation_type=payload.translation_type,
+            model=payload.model,
         )
         return TranslateResponse(
             output=result.output,

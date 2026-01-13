@@ -18,6 +18,13 @@ class TranslateRequest(BaseModel):
         "instructions", description="Type of configuration being translated"
     )
     project_id: int | None = Field(None, description="Optional project ID")
+    translation_type: Literal["syntax", "semantic"] = Field(
+        "syntax",
+        description="Type of translation: 'syntax' for rule-based, 'semantic' for LLM-powered",
+    )
+    model: str | None = Field(
+        None, description="Optional model override for semantic translation"
+    )
 
 
 class TranslateResponse(BaseModel):

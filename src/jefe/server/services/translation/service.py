@@ -1,8 +1,9 @@
-"""Translation service for syntax translation with audit logging."""
+"""Translation service for syntax and semantic translation with audit logging."""
 
 from __future__ import annotations
 
 import difflib
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -10,11 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jefe.data.models.translation_log import TranslationLog, TranslationType
 from jefe.data.repositories.translation_log import TranslationLogRepository
+from jefe.server.services.translation.semantic import translate_semantic
 from jefe.server.services.translation.syntax import (
     HarnessName,
     TranslationError,
     translate_syntax,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TranslationResult:
@@ -54,6 +58,10 @@ class TranslationService:
         target_harness: HarnessName,
         config_kind: Literal["settings", "instructions"] = "instructions",
         project_id: int | None = None,
+        *,
+        translation_type: Literal["syntax", "semantic"] = "syntax",
+        api_key: str | None = None,
+        model: str | None = None,
     ) -> TranslationResult:
         """
         Translate content between harness formats with logging.
@@ -64,6 +72,10 @@ class TranslationService:
             target_harness: The harness to translate to
             config_kind: Whether this is a settings or instructions config
             project_id: Optional project ID to associate with this translation
+            translation_type: Type of translation - "syntax" for rule-based,
+                              "semantic" for LLM-powered style adaptation
+            api_key: Optional OpenRouter API key for semantic translation
+            model: Optional model override for semantic translation
 
         Returns:
             TranslationResult with output, diff, and log ID
@@ -75,13 +87,19 @@ class TranslationService:
         self._validate_harness(source_harness)
         self._validate_harness(target_harness)
 
-        # Perform translation
-        try:
-            output = translate_syntax(content, source_harness, target_harness, config_kind)
-        except TranslationError:
-            raise
-        except Exception as e:
-            raise TranslationError(f"Unexpected error during translation: {e}") from e
+        # Perform translation based on type
+        if translation_type == "semantic":
+            output, model_used = await self._translate_semantic(
+                content, source_harness, target_harness, config_kind, api_key, model
+            )
+            log_type = TranslationType.SEMANTIC
+            log_model_name = model_used
+        else:
+            output = self._translate_syntax(
+                content, source_harness, target_harness, config_kind
+            )
+            log_type = TranslationType.SYNTAX
+            log_model_name = f"{source_harness}-to-{target_harness}"
 
         # Generate diff
         diff = self._generate_diff(content, output, source_harness, target_harness)
@@ -90,12 +108,63 @@ class TranslationService:
         log = await self.log_repo.create(
             input_text=content,
             output_text=output,
-            translation_type=TranslationType.SYNTAX,
-            model_name=f"{source_harness}-to-{target_harness}",
+            translation_type=log_type,
+            model_name=log_model_name,
             project_id=project_id,
         )
 
+        logger.info(
+            "Translation completed: type=%s, model=%s, log_id=%d",
+            translation_type,
+            log_model_name,
+            log.id,
+        )
+
         return TranslationResult(output=output, diff=diff, log_id=log.id)
+
+    def _translate_syntax(
+        self,
+        content: str,
+        source_harness: HarnessName,
+        target_harness: HarnessName,
+        config_kind: Literal["settings", "instructions"],
+    ) -> str:
+        """Perform syntax-based translation."""
+        try:
+            return translate_syntax(content, source_harness, target_harness, config_kind)
+        except TranslationError:
+            raise
+        except Exception as e:
+            raise TranslationError(f"Unexpected error during translation: {e}") from e
+
+    async def _translate_semantic(
+        self,
+        content: str,
+        source_harness: HarnessName,
+        target_harness: HarnessName,
+        config_kind: Literal["settings", "instructions"],
+        api_key: str | None,
+        model: str | None,
+    ) -> tuple[str, str]:
+        """Perform semantic translation using LLM.
+
+        Returns:
+            Tuple of (translated_content, model_used)
+        """
+        try:
+            result = await translate_semantic(
+                content=content,
+                source_harness=source_harness,
+                target_harness=target_harness,
+                config_kind=config_kind,
+                api_key=api_key,
+                model=model,
+            )
+            return result.output, result.model_used
+        except TranslationError:
+            raise
+        except Exception as e:
+            raise TranslationError(f"Unexpected error during semantic translation: {e}") from e
 
     async def get_history(
         self,

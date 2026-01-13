@@ -84,13 +84,28 @@ def translate_file(
         Path | None, typer.Option("--output", help="Write to different file")
     ] = None,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip confirmation")] = False,
+    semantic: Annotated[
+        bool,
+        typer.Option(
+            "--semantic", "-s", help="Use LLM-powered semantic translation for style adaptation"
+        ),
+    ] = False,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Model to use for semantic translation"),
+    ] = None,
 ) -> None:
     """Translate a config file between harness formats.
+
+    By default, uses rule-based syntax translation. Use --semantic for
+    LLM-powered translation that adapts the prompting style.
 
     Examples:
         sc translate file CLAUDE.md --from claude-code --to codex-cli
         sc translate file CLAUDE.md --from claude-code --to gemini-cli --dry-run
         sc translate file CLAUDE.md --from claude-code --to codex-cli --output AGENTS.md
+        sc translate file CLAUDE.md --from claude-code --to codex-cli --semantic
+        sc translate file CLAUDE.md --from claude-code --to codex-cli --semantic -m anthropic/claude-3-opus
     """
     _require_api_key()
 
@@ -107,7 +122,18 @@ def translate_file(
         console.print("[red]Missing required option:[/red] --to")
         raise typer.Exit(code=1)
 
-    anyio.run(_translate_file, file_path, from_harness, to_harness, dry_run, output, yes)
+    translation_type = "semantic" if semantic else "syntax"
+    anyio.run(
+        _translate_file,
+        file_path,
+        from_harness,
+        to_harness,
+        dry_run,
+        output,
+        yes,
+        translation_type,
+        model,
+    )
 
 
 async def _translate_file(
@@ -117,6 +143,8 @@ async def _translate_file(
     dry_run: bool,
     output: Path | None,
     yes: bool,
+    translation_type: str = "syntax",
+    model: str | None = None,
 ) -> None:
     """Async implementation of file translation."""
     # Read file content
@@ -132,18 +160,24 @@ async def _translate_file(
     if any(name in file_name for name in ["SETTING", "CONFIG", ".TOML", ".JSON"]):
         config_kind = "settings"
 
+    # Build request payload
+    payload: dict[str, object] = {
+        "content": content,
+        "source_harness": from_harness,
+        "target_harness": to_harness,
+        "config_kind": config_kind,
+        "translation_type": translation_type,
+    }
+    if model:
+        payload["model"] = model
+
     # Call translation API
     async with create_client() as client:
         response = await _request(
             client,
             "POST",
             "/api/translate",
-            json={
-                "content": content,
-                "source_harness": from_harness,
-                "target_harness": to_harness,
-                "config_kind": config_kind,
-            },
+            json=payload,
         )
 
     if response.status_code != 200:
@@ -154,10 +188,13 @@ async def _translate_file(
     diff = result["diff"]
     log_id = result["log_id"]
 
-    # Show diff
+    # Show translation info
     console.print(f"\n[cyan]Translating:[/cyan] {file}")
     console.print(f"[cyan]From:[/cyan] {from_harness}")
     console.print(f"[cyan]To:[/cyan] {to_harness}")
+    console.print(f"[cyan]Type:[/cyan] {translation_type}")
+    if model:
+        console.print(f"[cyan]Model:[/cyan] {model}")
     console.print(f"[dim]Translation log ID: {log_id}[/dim]\n")
 
     _render_diff(diff)
