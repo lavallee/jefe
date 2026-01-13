@@ -1,0 +1,16 @@
+# Minimal Recipe Example
+# Shows the simplest possible recipe structure
+
+name: minimal-setup
+description: Basic development tools for any project
+
+# Just a few essential skills, no harness restrictions
+skills:
+  - source: core
+    name: git-helpers
+
+  - source: core
+    name: file-utils
+
+  - source: core
+    name: string-tools

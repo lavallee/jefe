@@ -17,6 +17,15 @@ from jefe.server.schemas.projects import (
     ProjectResponse,
     ProjectUpdate,
 )
+from jefe.server.schemas.recipe import (
+    Recipe,
+    RecipeApplyRequest,
+    RecipeApplyResponse,
+    RecipeLoadRequest,
+    RecipeResponse,
+    RecipeValidationError,
+    SkillSpec,
+)
 from jefe.server.schemas.skill import (
     InstalledSkillResponse,
     SkillInstallRequest,
@@ -42,9 +51,16 @@ __all__ = [
     "ProjectDetailResponse",
     "ProjectResponse",
     "ProjectUpdate",
+    "Recipe",
+    "RecipeApplyRequest",
+    "RecipeApplyResponse",
+    "RecipeLoadRequest",
+    "RecipeResponse",
+    "RecipeValidationError",
     "SkillInstallRequest",
     "SkillRef",
     "SkillResponse",
+    "SkillSpec",
     "SourceCreate",
     "SourceResponse",
     "StatusResponse",

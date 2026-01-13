@@ -1,0 +1,51 @@
+# Web UI Development Recipe
+# Complete setup for modern web application development
+
+name: web-ui
+description: Complete web development environment with React, TypeScript, and testing tools
+
+# Target harnesses - applies to code editors supporting web development
+harnesses:
+  - claude-code
+  - cursor
+  - vscode
+
+# Individual skills with version constraints
+skills:
+  # React development
+  - source: javascript
+    name: react-snippets
+    version: ^2.0.0
+    pinned: false
+
+  # TypeScript support
+  - source: javascript
+    name: typescript-helpers
+    version: 1.5.2
+    pinned: true  # Pinned for stability
+
+  # Testing framework
+  - source: testing
+    name: jest-runner
+    version: ~3.1.0
+
+  # Code quality
+  - source: javascript
+    name: eslint-formatter
+    version: >=2.0.0
+
+  # CSS and styling
+  - source: frontend
+    name: tailwind-utilities
+    version: ^1.8.0
+
+  # API integration
+  - source: frontend
+    name: axios-helpers
+    version: *  # Latest version
+
+# Pre-configured bundles for common workflows
+bundles:
+  - frontend-essentials
+  - testing-suite
+  - react-toolkit
