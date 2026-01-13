@@ -231,3 +231,39 @@ Skill models are ready for integration with:
 - CLI commands to list/manage skills
 - API endpoints for skill browsing
 - Sync logic to update skill metadata from sources
+
+## Session 2026-01-13: Gemini CLI Configuration Research (sc-029)
+
+### Key Learnings
+
+1. **Config System Architecture**: Gemini CLI uses a hierarchical JSON config system with 4 precedence levels (system-defaults → user settings → project settings → system settings). User settings live at `~/.gemini/settings.json`.
+
+2. **Custom Commands via TOML**: Skills/commands are TOML files in `~/.gemini/commands/` (global) or `.gemini/commands/` (project). They support:
+   - `{{args}}` for argument injection (context-aware escaping)
+   - `!{shell command}` for dynamic shell execution
+   - `@{path}` for file/directory content injection
+   - Subdirectories map to namespaced commands (e.g., `git/commit.toml` → `/git:commit`)
+
+3. **Context Files (GEMINI.md)**: Hierarchical instruction loading from global (`~/.gemini/GEMINI.md`), project ancestors, and subdirectories. Supports modular imports via `@path/to/file.md` syntax. View with `/memory show`.
+
+4. **Skills Configuration**: Experimental feature enabled via `experimental.skills: true` with selective disabling through `skills.disabled` array in settings.json.
+
+5. **MCP Integration**: `mcpServers` section in settings.json enables custom tool integration through Model-Context Protocol with command/URL/env configuration.
+
+### Implementation Implications for Jefe
+
+- Claude Code adapter should look for custom commands in `.gemini/commands/` using TOML format
+- GEMINI.md files can be used for project context (similar to Claude Code's context files)
+- Environment variable expansion in settings files (`$VAR` / `${VAR}`) is supported
+- Skills are configured in settings.json, not as separate files
+
+### Documentation
+
+Created comprehensive research doc at `docs/gemini-cli-research.md` covering:
+- All configuration file locations and precedence
+- JSON settings structure with all categories
+- TOML custom command format with examples
+- GEMINI.md context file system
+- Skills and MCP integration patterns
+- CLI commands and flags reference
+
