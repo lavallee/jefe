@@ -249,11 +249,42 @@ class SkillService:
 
         Returns:
             True if uninstalled, False if not found
+
+        Raises:
+            SkillInstallError: If uninstallation fails
         """
-        # Note: This only removes the database record.
-        # The actual skill files remain on disk and may need manual cleanup.
-        result = await self.installed_skill_repo.uninstall(installed_skill_id)
-        if result:
-            await self.session.commit()
-            logger.info(f"Uninstalled skill installation {installed_skill_id}")
-        return result
+        # Get the installed skill record
+        installed_skill = await self.installed_skill_repo.get_by_id(installed_skill_id)
+        if not installed_skill:
+            return False
+
+        # Get the harness to determine the adapter
+        harness = await self.harness_repo.get_by_id(installed_skill.harness_id)
+        if harness is None:
+            raise SkillInstallError(
+                f"Harness {installed_skill.harness_id} not found for installed skill"
+            )
+
+        # Get harness adapter
+        adapter = get_adapter(harness.name)
+        if adapter is None:
+            raise SkillInstallError(f"No adapter found for harness {harness.name}")
+
+        try:
+            # Remove the skill files using the adapter
+            installed_path = Path(installed_skill.installed_path)
+            adapter.uninstall_skill(installed_path)
+
+            # Remove the database record
+            result = await self.installed_skill_repo.uninstall(installed_skill_id)
+            if result:
+                await self.session.commit()
+                logger.info(
+                    f"Uninstalled skill installation {installed_skill_id} from {installed_path}"
+                )
+            return result
+
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Failed to uninstall skill {installed_skill_id}: {e}")
+            raise SkillInstallError(f"Uninstallation failed: {e}") from e

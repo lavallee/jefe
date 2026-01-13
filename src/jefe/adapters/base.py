@@ -63,3 +63,15 @@ class HarnessAdapter(ABC):
         self, skill: Path, scope: ConfigScope, project_path: Path | None = None
     ) -> Path:
         """Install a skill into the harness scope and return the installed path."""
+
+    @abstractmethod
+    def uninstall_skill(self, installed_path: Path) -> bool:
+        """
+        Uninstall a skill by removing its files.
+
+        Args:
+            installed_path: Path to the installed skill directory or file
+
+        Returns:
+            True if uninstalled successfully, False if path doesn't exist
+        """

@@ -174,3 +174,15 @@ class ClaudeCodeAdapter(HarnessAdapter):
             shutil.copy2(skill_path, destination)
 
         return destination
+
+    def uninstall_skill(self, installed_path: Path) -> bool:
+        installed_path = Path(installed_path)
+        if not installed_path.exists():
+            return False
+
+        if installed_path.is_dir():
+            shutil.rmtree(installed_path)
+        else:
+            installed_path.unlink()
+
+        return True
