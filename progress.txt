@@ -2912,3 +2912,46 @@ All translation features (API, CLI, Web UI) have been successfully implemented a
 - Resource warnings in tests are normal for SQLite in-memory databases
 - Enum types (InstallScope, ConfigScope) reused from server models for consistency
 
+
+## Session: 2026-01-13 - Cache Layer Implementation (sc-050)
+
+### What Was Done
+- Implemented comprehensive cache layer for CLI using repository pattern
+- Created `src/jefe/cli/cache/repositories.py` with:
+  - Generic `CacheRepository` base class with TTL checking
+  - Entity-specific repositories: ProjectRepository, SkillRepository, InstalledSkillRepository, HarnessConfigRepository
+  - Dirty tracking methods: mark_dirty, get_dirty, clear_dirty, clear_all_dirty
+  - TTL freshness checking with configurable expiration (default 300s)
+- Created `src/jefe/cli/cache/manager.py` as facade:
+  - Clean interface for all cache operations
+  - Convenience methods for each entity type
+  - Sync operations across all entity types
+- Comprehensive test coverage: 53 tests passing
+  - `tests/cli/cache/test_repositories.py` - Repository layer tests
+  - `tests/cli/cache/test_cache_manager.py` - Manager facade tests
+
+### Key Design Decisions
+- Used repository pattern for separation of concerns
+- Generic CacheRepository with TypeVar for reusability
+- TTL checking compares datetime.now(UTC) against last_synced
+- Dirty flag tracks local modifications for sync operations
+- Manager facade provides unified interface to all repositories
+- Each repository manages its own session lifecycle
+
+### Technical Details
+- Python 3.13+ with datetime.UTC (not timezone.utc)
+- SQLAlchemy ORM with in-memory testing via fixtures
+- Timezone-aware datetime handling throughout
+- Session management per repository instance
+
+### Acceptance Criteria Verified
+✓ Can cache server responses
+✓ Can mark items as dirty
+✓ TTL expiration works
+✓ Cache manager provides clean interface
+✓ Tests pass (mypy, pytest, ruff all green)
+
+### Next Steps
+- Integration with CLI client for actual caching (sc-051 or similar)
+- Sync logic to push dirty items to server
+- Cache invalidation strategies beyond TTL
