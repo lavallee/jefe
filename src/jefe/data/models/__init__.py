@@ -3,6 +3,7 @@
 from jefe.data.models.base import Base, TimestampMixin
 from jefe.data.models.harness import Harness
 from jefe.data.models.harness_config import ConfigScope, HarnessConfig
+from jefe.data.models.installed_skill import InstalledSkill, InstallScope
 from jefe.data.models.manifestation import Manifestation, ManifestationType
 from jefe.data.models.project import Project
 from jefe.data.models.skill import Skill
@@ -13,6 +14,8 @@ __all__ = [
     "ConfigScope",
     "Harness",
     "HarnessConfig",
+    "InstallScope",
+    "InstalledSkill",
     "Manifestation",
     "ManifestationType",
     "Project",
