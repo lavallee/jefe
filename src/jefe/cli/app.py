@@ -7,6 +7,7 @@ from jefe import __version__
 from jefe.cli.commands.bundles import bundles_app
 from jefe.cli.commands.config import config_app
 from jefe.cli.commands.harnesses import harnesses_app
+from jefe.cli.commands.knowledge import knowledge_app
 from jefe.cli.commands.projects import projects_app
 from jefe.cli.commands.skills import skills_app
 from jefe.cli.commands.sources import sources_app
@@ -26,6 +27,7 @@ app.add_typer(bundles_app, name="bundles")
 app.add_typer(config_app, name="config")
 app.add_typer(projects_app, name="projects")
 app.add_typer(harnesses_app, name="harnesses")
+app.add_typer(knowledge_app, name="knowledge")
 app.add_typer(sources_app, name="sources")
 app.add_typer(skills_app, name="skills")
 app.add_typer(status_app, name="status")
