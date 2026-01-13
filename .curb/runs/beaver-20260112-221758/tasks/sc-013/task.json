@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-013",
+  "title": "Harness adapter base class",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T03:40:01Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T03:45:24Z",
+  "exit_code": 0
+}
