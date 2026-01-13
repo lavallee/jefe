@@ -1,5 +1,62 @@
 # Jefe - Development Progress
 
+## Session 13 (2026-01-13)
+
+### Task: sc-064 - Knowledge Ingestion Service
+
+Implemented the knowledge ingestion service to fetch URLs and extract/summarize content.
+
+#### Implementation Summary
+
+1. **KnowledgeService** (`src/jefe/server/services/knowledge.py`)
+   - Full URL ingestion pipeline: fetch → extract → summarize → store
+   - Rate limiting via `RateLimiter` class (requests per second)
+   - HTTP client with User-Agent, redirects, and timeout handling
+   - Async context manager pattern for resource cleanup
+
+2. **ContentExtractor**
+   - HTML extraction using custom `_HTMLTextExtractor` (HTMLParser subclass)
+   - Strips scripts, styles, head, noscript content
+   - Extracts title from `<title>` tag
+   - Markdown extraction with regex-based syntax stripping
+   - Preserves readable text while removing formatting markers
+
+3. **LLM Summarization**
+   - OpenRouter integration via existing `OpenRouterClient`
+   - Structured prompt requesting SUMMARY and TAGS sections
+   - Response parsing with fallback defaults
+   - Content truncation at ~8000 chars for long documents
+
+4. **Rate Limiting**
+   - Simple async rate limiter using monotonic time
+   - Configurable requests per second
+   - Lock-based concurrency safety
+
+#### API Endpoint Changes
+
+Updated `/api/knowledge/ingest` from 501 stub to working implementation:
+- Returns 201 Created with entry on success
+- Returns 400 Bad Request for duplicate URLs
+- Returns 502 Bad Gateway for fetch/LLM failures
+
+#### Test Coverage
+
+36 tests with 99% coverage:
+- `TestContentExtractor`: HTML/Markdown extraction
+- `TestRateLimiter`: Rate limiting behavior
+- `TestKnowledgeServiceFetchUrl`: URL fetching with mocks
+- `TestKnowledgeServiceSummarize`: LLM integration with mocks
+- `TestKnowledgeServiceIngestUrl`: Full pipeline tests
+- `TestKnowledgeAPIIntegration`: API endpoint tests
+
+#### Key Learnings
+
+1. **httpx.Response mocking**: Cannot use `httpx.Response` directly in tests as `raise_for_status()` requires a request object. Use custom `_make_mock_response()` helper with MagicMock.
+
+2. **AsyncMock context managers**: When mocking async context managers, the `__aenter__` must return the mock that has the method being called (e.g., `complete`), not the outer mock.
+
+3. **frozenset for class constants**: Use `frozenset` instead of `set` for class-level constants to avoid RUF012 linting errors about mutable class attributes.
+
 ## Session 12 (2026-01-13)
 
 ### Epic: sc-E05 - Web Interface
