@@ -2302,3 +2302,112 @@ All checks pass successfully:
 - Export project data to JSON/YAML
 
 The projects pages provide full CRUD functionality with a clean, modern interface following established patterns from the dashboard implementation.
+
+## Session: sc-038 (2026-01-13)
+
+### Task: Skills browser
+
+Successfully implemented a complete skills browser web interface for browsing and installing skills via the web UI.
+
+#### Implementation Summary
+
+1. **Templates Created**
+   - `src/jefe/web/templates/skills/browser.html` - Main browser page with search/filter UI
+   - `src/jefe/web/templates/skills/_card.html` - Reusable skill card component
+   - `src/jefe/web/templates/skills/_install_modal.html` - Modal form for skill installation
+
+2. **Route Handlers Added** (`src/jefe/web/routes.py`)
+   - `GET /skills` - Main browser page with all skills, sources, and installed skill IDs
+   - `GET /skills/search` - HTMX endpoint for live search/filter (returns HTML fragment)
+   - `GET /skills/install/{skill_id}` - Load install modal with harness/project options
+   - `POST /skills/install` - Process skill installation with SkillService
+
+3. **Key Features Implemented**
+   - **Live Search**: 300ms debounced search by name, description, or tags using HTMX
+   - **Source Filter**: Dropdown to filter skills by source repository
+   - **Skill Cards**: Grid layout showing skill metadata (name, description, version, author, tags)
+   - **Installed Badge**: Green checkmark badge on already-installed skills
+   - **Install Modal**: Multi-step form with harness selection, scope (global/project), conditional project selection
+   - **Responsive Design**: Grid layout adapts from 1-3 columns based on screen size
+   - **Empty States**: Helpful messages when no skills exist or search returns no results
+
+#### Technical Patterns Learned
+
+1. **HTMX Integration Patterns**
+   - Search input: `hx-get="/skills/search" hx-trigger="input changed delay:300ms"` for debounced search
+   - Include related fields: `hx-include="[name='source_filter']"` to include other form inputs
+   - Modal loading: `hx-get="/skills/install/{id}" hx-target="#modal-container" hx-swap="innerHTML"`
+   - Form submission: `hx-post="/skills/install" hx-swap="none"` with `HX-Redirect` header response
+   - Dynamic content replacement: Target `#skills-grid` to update just the grid without full page reload
+
+2. **Template Component Pattern**
+   - Partial templates start with `_` (e.g., `_card.html`, `_install_modal.html`)
+   - Card template receives `skill` and `installed_skill_ids` context
+   - Modal template receives `skill`, `harnesses`, and `projects` context
+   - Use `{% include "skills/_card.html" %}` in loops for DRY code
+
+3. **SQLAlchemy Query Building**
+   - Used `select(Skill).options(selectinload(Skill.source))` for eager loading
+   - Applied filters conditionally: `query.where(Skill.source_id == source_id)` only if filter present
+   - Used `.ilike()` for case-insensitive search: `Skill.name.ilike(f"%{search}%")`
+   - Combined multiple search conditions with `|` (OR): `(Skill.name.ilike(...)) | (Skill.description.ilike(...))`
+   - Used `select(InstalledSkill.skill_id)` to get just IDs for installed badge logic
+
+4. **Jinja2 Template Rendering for HTMX**
+   - For HTMX responses, manually render template: `templates.get_template("skills/_card.html").render(...)`
+   - Wrap multiple cards in HTML string: `f'<div class="grid ...">{cards_html}</div>'`
+   - Return `HTMLResponse(content=html_string)` for HTMX to swap into DOM
+   - This allows returning just the grid content without the full page structure
+
+5. **JavaScript in Templates**
+   - Used inline `onclick` for modal close: `onclick="document.getElementById('modal-container').innerHTML = ''"`
+   - Used `<script>` tags for conditional field visibility: `toggleProjectField()` function
+   - Avoided complex JS frameworks - keep it simple with vanilla JS for progressive enhancement
+
+6. **Skill Model Methods**
+   - `skill.get_tags_list()` - Parse JSON tags string to Python list
+   - `skill.source.name` - Access related source via SQLAlchemy relationship
+   - Used `skill.display_name or skill.name` for fallback display name
+
+#### Acceptance Criteria Verification
+
+✅ /skills shows skill browser - Main page loads with all skills in grid layout
+✅ Can search skills - Live search with 300ms debounce works on name/description/tags
+✅ Can filter by source - Dropdown filter updates grid via HTMX
+✅ Can install skill via modal - Modal shows harness/scope/project selection, form submits successfully
+✅ Installed skills marked - Green "Installed" badge shows on already-installed skills
+
+#### Feedback Loop Results
+
+All checks passed successfully:
+- ✓ Type checking: `mypy src/jefe/web/routes.py` - No issues
+- ✓ Tests: `pytest -xvs` - All 267 tests passed (79% coverage)
+- ✓ Linting: `ruff check src/jefe/web/routes.py` - All checks passed
+
+#### Key Learnings
+
+1. **Ruff Linting**: Remove unused variables (F841) - Fixed by removing `skill_repo` assignments and unused exception variable `e`
+2. **HTMX Search Pattern**: Use `delay:300ms` to debounce search input, preventing excessive requests
+3. **SQLAlchemy Eager Loading**: Always use `selectinload()` for relationships to avoid N+1 queries
+4. **Modal Close Pattern**: Use `onclick` to clear modal container innerHTML for consistent behavior
+5. **Conditional Form Fields**: Use JavaScript to show/hide project field based on scope selection
+6. **Empty State UX**: Always provide helpful messages and context when no data is available
+7. **Grid Responsiveness**: Use `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` for responsive layouts
+8. **HTMX Form Submission**: Use `hx-swap="none"` with `HX-Redirect` header to trigger client-side navigation after successful form submission
+9. **Installed Skill Tracking**: Query `select(InstalledSkill.skill_id)` once and pass set to all templates for efficient lookup
+10. **Template Context**: Always pass `request` object to Jinja2 templates (required for URL generation)
+
+#### Files Modified
+
+- `src/jefe/web/routes.py` - Added 4 new route handlers, imported necessary models/repos/services
+- `src/jefe/web/templates/skills/browser.html` - Main browser page (new)
+- `src/jefe/web/templates/skills/_card.html` - Skill card component (new)
+- `src/jefe/web/templates/skills/_install_modal.html` - Install modal form (new)
+
+#### Commit
+
+```
+task(sc-038): Skills browser
+```
+
+Full-featured skills browser implementation with live search, filtering, and installation modal.
