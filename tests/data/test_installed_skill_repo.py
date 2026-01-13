@@ -88,7 +88,7 @@ class TestInstalledSkillRepository:
 
     async def test_install_and_fetch_by_id(self, session: AsyncSession) -> None:
         """Install a skill and fetch it by ID."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         installation = await repo.install(
@@ -112,7 +112,7 @@ class TestInstalledSkillRepository:
 
     async def test_global_installation(self, session: AsyncSession) -> None:
         """Install a skill globally."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, _project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         installation = await repo.install(
@@ -130,7 +130,7 @@ class TestInstalledSkillRepository:
 
     async def test_get_by_identity(self, session: AsyncSession) -> None:
         """Fetch an installation by its identity fields."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         installation = await repo.install(
@@ -192,7 +192,7 @@ class TestInstalledSkillRepository:
 
     async def test_get_by_harness(self, session: AsyncSession) -> None:
         """Get all skills installed for a harness."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, _project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         await repo.install(
@@ -244,7 +244,7 @@ class TestInstalledSkillRepository:
 
     async def test_uninstall(self, session: AsyncSession) -> None:
         """Uninstall a skill."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         installation = await repo.install(
@@ -261,7 +261,7 @@ class TestInstalledSkillRepository:
 
     async def test_unique_constraint(self, session: AsyncSession) -> None:
         """Test unique constraint on installation identity."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         await repo.install(
@@ -284,7 +284,7 @@ class TestInstalledSkillRepository:
 
     async def test_relationship_loading(self, session: AsyncSession) -> None:
         """Test eager loading of relationships."""
-        source, skill, harness, project = await _create_test_data(session)
+        _source, skill, harness, project = await _create_test_data(session)
 
         repo = InstalledSkillRepository(session)
         await repo.install(

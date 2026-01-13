@@ -264,7 +264,7 @@ class TestSkillRepository:
 
     async def test_get_by_name(self, session: AsyncSession) -> None:
         """Fetch a skill by name."""
-        source, skill = await _create_source_with_skill(session, skill_name="unique-skill")
+        _source, _skill = await _create_source_with_skill(session, skill_name="unique-skill")
 
         repo = SkillRepository(session)
         fetched = await repo.get_by_name("unique-skill")
@@ -274,7 +274,7 @@ class TestSkillRepository:
 
     async def test_list_by_source(self, session: AsyncSession) -> None:
         """List all skills from a specific source."""
-        source, skill1 = await _create_source_with_skill(session, skill_name="skill-1")
+        source, _skill1 = await _create_source_with_skill(session, skill_name="skill-1")
 
         skill_repo = SkillRepository(session)
         await skill_repo.create(
@@ -290,7 +290,7 @@ class TestSkillRepository:
 
     async def test_list_by_name(self, session: AsyncSession) -> None:
         """List all skills matching a specific name."""
-        source1, skill1 = await _create_source_with_skill(
+        _source1, _skill1 = await _create_source_with_skill(
             session, source_name="source-1", skill_name="duplicate"
         )
 
@@ -314,7 +314,7 @@ class TestSkillRepository:
 
     async def test_search_by_tag(self, session: AsyncSession) -> None:
         """Search skills by tag."""
-        source, skill = await _create_source_with_skill(session)
+        _source, skill = await _create_source_with_skill(session)
 
         repo = SkillRepository(session)
         skills = await repo.search_by_tag("testing")
@@ -329,7 +329,7 @@ class TestSkillRepository:
 
     async def test_list_by_author(self, session: AsyncSession) -> None:
         """List all skills by a specific author."""
-        source, skill1 = await _create_source_with_skill(session, skill_name="skill-1")
+        source, _skill1 = await _create_source_with_skill(session, skill_name="skill-1")
 
         skill_repo = SkillRepository(session)
         await skill_repo.create(
@@ -363,7 +363,7 @@ class TestSkillRepository:
 
     async def test_list_all_with_filters(self, session: AsyncSession) -> None:
         """List all skills with optional filters."""
-        source1, skill1 = await _create_source_with_skill(
+        source1, _skill1 = await _create_source_with_skill(
             session, source_name="source-1", skill_name="skill-1"
         )
 
@@ -405,7 +405,7 @@ class TestSkillRepository:
 
     async def test_skill_json_helpers(self, session: AsyncSession) -> None:
         """Test skill JSON helper methods."""
-        source, skill = await _create_source_with_skill(session)
+        _source, skill = await _create_source_with_skill(session)
 
         # Test tags
         tags = skill.get_tags_list()
@@ -425,7 +425,7 @@ class TestSkillRepository:
 
     async def test_update_and_delete_skill(self, session: AsyncSession) -> None:
         """Update and delete a skill."""
-        source, skill = await _create_source_with_skill(session)
+        _source, skill = await _create_source_with_skill(session)
 
         repo = SkillRepository(session)
         updated = await repo.update(skill.id, version="2.0.0", author="New Author")
