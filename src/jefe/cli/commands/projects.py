@@ -7,6 +7,7 @@ import anyio
 import httpx
 import typer
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from jefe.cli.cache.manager import CacheManager
@@ -17,6 +18,7 @@ console = Console()
 PATH_OPTION = typer.Option(None, "--path", help="Local path to the project")
 REMOTE_OPTION = typer.Option(None, "--remote", help="Remote repository URL")
 DESCRIPTION_OPTION = typer.Option(None, "--description", help="Optional description")
+RECIPE_OPTION = typer.Option(None, "--recipe", help="Path to recipe YAML file")
 
 
 def _require_api_key() -> None:
@@ -362,3 +364,246 @@ async def _remove_project_async(name_or_id: str) -> None:
         _fail_request("delete project", response)
 
     console.print(f"Removed project {name_or_id}.")
+
+
+RECIPE_REQUIRED = typer.Option(..., "--recipe", "-r", help="Path to recipe YAML file")
+NAME_OPTION = typer.Option(None, "--name", "-n", help="Project name (defaults to current directory name)")
+PATH_INIT_OPTION = typer.Option(None, "--path", "-p", help="Project path (defaults to current directory)")
+
+
+@projects_app.command("init")
+def init_project(
+    recipe: Path = RECIPE_REQUIRED,
+    name: str | None = NAME_OPTION,
+    path: Path | None = PATH_INIT_OPTION,
+    description: str | None = DESCRIPTION_OPTION,
+) -> None:
+    """Initialize a project with a recipe."""
+    _require_api_key()
+    anyio.run(_init_project_async, recipe, name, path, description)
+
+
+async def _init_project_async(  # noqa: C901
+    recipe_path: Path,
+    name: str | None,
+    path: Path | None,
+    description: str | None,
+) -> None:
+    # Validate recipe file exists
+    if not recipe_path.exists():
+        console.print(f"[red]Recipe file not found:[/red] {recipe_path}")
+        raise typer.Exit(code=1)
+
+    # Determine project path and name
+    project_path = path if path is not None else Path.cwd()
+    if not project_path.exists():
+        console.print(f"[red]Project path does not exist:[/red] {project_path}")
+        raise typer.Exit(code=1)
+
+    project_name = name if name is not None else project_path.name
+
+    # Check if we're online
+    online = await is_online()
+    if not online:
+        console.print("[red]Init command requires server connection.[/red]")
+        console.print("Please start the Jefe server and try again.")
+        raise typer.Exit(code=1)
+
+    async with create_client() as client:
+        # Step 1: Parse and load recipe
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Loading recipe...", total=None)
+
+            # Read recipe content
+            try:
+                recipe_content = recipe_path.read_text()
+            except OSError as e:
+                console.print(f"[red]Failed to read recipe file:[/red] {e}")
+                raise typer.Exit(code=1) from e
+
+            # Parse recipe via API
+            parse_response = await _request(
+                client,
+                "POST",
+                "/api/recipes/parse",
+                json={"content": recipe_content},
+            )
+
+            if parse_response.status_code != 200:
+                _fail_request("parse recipe", parse_response)
+
+            recipe_data = parse_response.json()
+            progress.update(task, description=f"Loaded recipe: {recipe_data['name']}")
+
+        console.print(f"[green]✓[/green] Recipe: {recipe_data['name']}")
+        if recipe_data.get("description"):
+            console.print(f"  {recipe_data['description']}")
+
+        # Step 2: Check if project exists, create if not
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Checking project...", total=None)
+
+            # Check if project exists
+            projects_response = await _request(client, "GET", "/api/projects")
+            if projects_response.status_code != 200:
+                _fail_request("list projects", projects_response)
+
+            projects = projects_response.json()
+            existing_project = None
+            for proj in projects:
+                if proj.get("name") == project_name:
+                    existing_project = proj
+                    break
+
+            if existing_project:
+                project_id = existing_project["id"]
+                progress.update(task, description=f"Using existing project: {project_name}")
+            else:
+                # Create new project
+                create_payload = {
+                    "name": project_name,
+                    "description": description,
+                    "path": str(project_path.resolve()),
+                }
+                create_response = await _request(
+                    client,
+                    "POST",
+                    "/api/projects",
+                    json=create_payload,
+                )
+
+                if create_response.status_code != 201:
+                    _fail_request("create project", create_response)
+
+                existing_project = create_response.json()
+                project_id = existing_project["id"]
+                progress.update(task, description=f"Created project: {project_name}")
+
+        console.print(f"[green]✓[/green] Project: {project_name} (id={project_id})")
+
+        # Step 3: Resolve recipe
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Resolving recipe skills...", total=None)
+
+            resolve_response = await _request(
+                client,
+                "POST",
+                "/api/recipes/resolve",
+                json={"content": recipe_content},
+            )
+
+            if resolve_response.status_code != 200:
+                _fail_request("resolve recipe", resolve_response)
+
+            resolved_data = resolve_response.json()
+
+        # Count total skills
+        total_skills = sum(len(skills) for skills in resolved_data.values())
+        console.print(f"[green]✓[/green] Resolved {total_skills} skills across {len(resolved_data)} harness(es)")
+
+        # Step 4: Install skills for each harness
+        harnesses_response = await _request(client, "GET", "/api/harnesses")
+        if harnesses_response.status_code != 200:
+            _fail_request("list harnesses", harnesses_response)
+
+        harnesses = harnesses_response.json()
+        harness_map = {h["name"]: h["id"] for h in harnesses}
+
+        installation_results: dict[str, dict[str, int]] = {}
+
+        for harness_name, skills in resolved_data.items():
+            if harness_name == "*":
+                # Recipe applies to all harnesses - install to first available or skip
+                console.print("[yellow]⚠ Recipe applies to all harnesses - please specify harnesses in recipe[/yellow]")
+                continue
+
+            if harness_name not in harness_map:
+                console.print(f"[yellow]⚠ Harness '{harness_name}' not registered, skipping[/yellow]")
+                continue
+
+            harness_id = harness_map[harness_name]
+
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console,
+            ) as progress:
+                task = progress.add_task(
+                    f"Installing skills for {harness_name}...",
+                    total=len(skills),
+                )
+
+                installed = 0
+                failed = 0
+                skipped = 0
+
+                for skill in skills:
+                    install_payload = {
+                        "skill_id": skill["skill_id"],
+                        "harness_id": harness_id,
+                        "scope": "project",
+                        "project_id": project_id,
+                    }
+
+                    install_response = await _request(
+                        client,
+                        "POST",
+                        "/api/skills/install",
+                        json=install_payload,
+                    )
+
+                    if install_response.status_code == 201:
+                        installed += 1
+                    elif install_response.status_code == 409:
+                        # Already installed
+                        skipped += 1
+                    else:
+                        failed += 1
+                        console.print(
+                            f"  [red]✗[/red] Failed to install {skill['skill_name']}: "
+                            f"{install_response.status_code}"
+                        )
+
+                    progress.update(task, advance=1)
+
+            installation_results[harness_name] = {
+                "installed": installed,
+                "skipped": skipped,
+                "failed": failed,
+            }
+
+            # Print results for this harness
+            if installed > 0:
+                console.print(f"[green]✓[/green] {harness_name}: Installed {installed} skill(s)")
+            if skipped > 0:
+                console.print(f"[dim]  {skipped} already installed[/dim]")
+            if failed > 0:
+                console.print(f"[red]✗[/red] {harness_name}: Failed to install {failed} skill(s)")
+
+        # Summary
+        console.print()
+        console.print("[bold]Summary:[/bold]")
+        total_installed = sum(r["installed"] for r in installation_results.values())
+        total_skipped = sum(r["skipped"] for r in installation_results.values())
+        total_failed = sum(r["failed"] for r in installation_results.values())
+
+        console.print(f"  Installed: {total_installed}")
+        if total_skipped > 0:
+            console.print(f"  Already installed: {total_skipped}")
+        if total_failed > 0:
+            console.print(f"  Failed: {total_failed}")
+
+        if total_failed > 0:
+            raise typer.Exit(code=1)
