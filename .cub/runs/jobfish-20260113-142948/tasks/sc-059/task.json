@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-059",
+  "title": "Recipe parser and resolver",
+  "priority": "P2",
+  "status": "completed",
+  "started_at": "2026-01-13T20:16:14Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T20:28:50Z",
+  "exit_code": 0
+}
