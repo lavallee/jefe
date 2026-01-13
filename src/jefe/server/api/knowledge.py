@@ -1,5 +1,7 @@
 """Knowledge API endpoints."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +15,9 @@ from jefe.server.schemas.knowledge import (
     KnowledgeEntryResponse,
     KnowledgeIngestRequest,
 )
+from jefe.server.services.knowledge import KnowledgeIngestionError, KnowledgeService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -48,25 +53,40 @@ def _entry_to_detail_response(entry: KnowledgeEntry) -> KnowledgeEntryDetailResp
     status_code=status.HTTP_201_CREATED,
 )
 async def ingest_knowledge(
-    _payload: KnowledgeIngestRequest,
+    payload: KnowledgeIngestRequest,
     _api_key: APIKey,
-    _session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> KnowledgeEntryResponse:
     """Ingest a URL into the knowledge base.
 
-    Note: This is a placeholder implementation. In a production system, this would:
-    1. Fetch the content from the URL
-    2. Extract text from HTML/PDF/etc
-    3. Use an LLM to generate a summary
-    4. Extract or generate tags
-    5. Store the processed entry
-
-    For now, it returns a 501 Not Implemented.
+    This endpoint:
+    1. Fetches the content from the URL
+    2. Extracts text from HTML/Markdown
+    3. Uses an LLM to generate a summary
+    4. Extracts or generates tags
+    5. Stores the processed entry
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Ingestion pipeline not yet implemented. Use POST /api/knowledge directly to create entries.",
-    )
+    service = KnowledgeService(session)
+    try:
+        async with service:
+            entry = await service.ingest_url(
+                url=payload.source_url,
+                content_type_hint=payload.content_type,
+            )
+    except KnowledgeIngestionError as e:
+        logger.warning(f"Ingestion failed for {payload.source_url}: {e}")
+        # Check if it's a duplicate URL error
+        if "already exists" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            ) from e
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to ingest URL: {e}",
+        ) from e
+
+    return _entry_to_response(entry)
 
 
 @router.post(
@@ -108,11 +128,11 @@ async def create_knowledge_entry(
 
 @router.get("/api/knowledge", response_model=list[KnowledgeEntryResponse])
 async def search_knowledge(
+    _api_key: APIKey,
     q: str | None = None,
     tags: str | None = None,
     limit: int = 20,
     offset: int = 0,
-    _api_key: APIKey = APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> list[KnowledgeEntryResponse]:
     """Search knowledge entries.

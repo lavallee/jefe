@@ -292,17 +292,19 @@ def test_search_limit_validation(client_with_key: tuple[TestClient, str]) -> Non
     assert response.status_code == 400
 
 
-def test_ingest_endpoint_not_implemented(client_with_key: tuple[TestClient, str]) -> None:
-    """Ingest endpoint returns 501 Not Implemented."""
+def test_ingest_endpoint_requires_valid_url(client_with_key: tuple[TestClient, str]) -> None:
+    """Ingest endpoint returns 502 when URL cannot be fetched."""
     client, api_key = client_with_key
 
+    # Without mocking, the endpoint will try to fetch the URL and fail
+    # This tests the error handling path
     response = client.post(
         "/api/knowledge/ingest",
         json={
-            "source_url": "https://example.com/article",
+            "source_url": "https://nonexistent.example.com/article",
             "content_type": "documentation",
         },
         headers={"X-API-Key": api_key},
     )
-    assert response.status_code == 501
-    assert "not yet implemented" in response.json()["detail"].lower()
+    assert response.status_code == 502
+    assert "Failed to ingest URL" in response.json()["detail"]
