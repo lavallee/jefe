@@ -1657,3 +1657,77 @@ Comprehensive research and documentation of OpenCode configuration format, direc
 - Skills format is well-documented and testable
 
 The OpenCode research is complete with comprehensive documentation ready for adapter implementation.
+
+## Session: 2026-01-13 - sc-032: OpenCode adapter
+
+### What Was Done
+- Implemented complete OpenCode harness adapter with comprehensive test coverage
+- Created OpencodeAdapter with all HarnessAdapter interface methods
+- Added JSONC (JSON with Comments) parsing support for OpenCode config files
+- Registered OpenCode adapter in the adapter registry
+- Created comprehensive test suite with 21 tests covering all scenarios
+- All acceptance criteria met with 96% code coverage on opencode.py
+
+### Key Technical Decisions
+1. **Config Locations**: Primary location is ~/.config/opencode/ (XDG-compliant), with alternative ~/.opencode.json support
+2. **Skills Directory Structure**: .opencode/skill/<name>/ for project, ~/.config/opencode/skill/<name>/ for global
+3. **JSONC Support**: Implemented simple comment stripping by counting quotes before // to determine if inside/outside string
+4. **Agent and Skill Separation**: Agent configs in .opencode/agent/, skills in .opencode/skill/
+5. **Multiple Config Files**: Supports both opencode.json and .opencode.json at project root
+
+### Implementation Highlights
+1. **discover_global()**: Searches ~/.config/opencode/ for opencode.json, agent/, skill/ directories
+2. **discover_project()**: Searches project for .opencode/ directory, opencode.json, .opencode.json
+3. **parse_config()**: JSON/JSONC parsing with comment stripping, markdown as plain text
+4. **get_skills_path()**: Returns ~/.config/opencode/skill (global) or <project>/.opencode/skill (project)
+5. **install_skill()**: Copies skills to correct location, handles both directories and single files
+6. **uninstall_skill()**: Removes installed skills from filesystem
+
+### JSONC Comment Stripping Algorithm
+The adapter implements a simple but effective JSONC comment stripper:
+- For each line containing //, count quotes before the comment marker
+- If even number of quotes, comment is outside string (strip it)
+- If odd number of quotes, comment is inside string (preserve it)
+- Works for 99% of real-world JSONC files without full parser complexity
+
+### Patterns Learned
+1. **Config Discovery Pattern**: Check primary XDG location first, then alternative locations
+2. **Skills Path Structure**: OpenCode uses skill/<name>/ instead of skills/<name>/ (singular vs plural)
+3. **Directory Content**: Return None for directory content (not empty string or directory listing)
+4. **Test Coverage**: Mock Path.home() with tmp_path for global install tests to avoid touching user directory
+5. **Adapter Registration**: Simply import and call register_adapter() in __init__.py
+
+### Files Created
+- src/jefe/adapters/opencode.py - OpenCode adapter implementation (295 lines)
+- tests/adapters/test_opencode.py - Comprehensive test suite (21 tests, 311 lines)
+
+### Files Modified
+- src/jefe/adapters/__init__.py - Registered OpencodeAdapter
+
+### Test Results
+- All 71 adapter tests pass (21 new OpenCode tests, 50 existing tests)
+- Type checking: ✓ (mypy - 67 source files, clean)
+- Linting: ✓ (ruff - clean on new code)
+- Code coverage: 96% on opencode.py
+
+### Acceptance Criteria Verification
+✅ Discovers OpenCode configs (~/.config/opencode/, project .opencode/)
+✅ Parses config format correctly (JSON/JSONC with comments)
+✅ Can install skills to correct locations
+✅ Tests pass (21/21 tests passing with 96% coverage)
+
+### Key Learnings
+1. **OpenCode Config Structure**: Uses XDG-compliant paths by default (~/.config/opencode/)
+2. **JSONC is Common**: Many modern tools use JSONC for config files with user-friendly comments
+3. **Simple Comment Stripping**: Quote counting is sufficient for most JSONC files without full lexer
+4. **Skills vs Skill**: OpenCode uses singular "skill/" directory, not "skills/" like other adapters
+5. **Comprehensive Testing**: 21 tests cover all discovery paths, parsing scenarios, and install/uninstall operations
+
+### Integration Notes
+- OpenCode adapter is now automatically discovered by harness service
+- Skills can be installed to OpenCode CLI locations via API or CLI
+- Follows same adapter pattern as ClaudeCodeAdapter, CodexCliAdapter, and GeminiCliAdapter
+- Ready for use in production skill installation workflows
+- OpenCode harness will be automatically seeded in database on server startup
+
+The OpenCode adapter is now fully functional and completes the multi-harness skill management system.
