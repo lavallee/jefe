@@ -1380,3 +1380,61 @@ sc skills uninstall 1
 5. **Test isolation**: Using tmp_path and changing cwd in tests ensures no side effects on actual filesystem
 
 The skill installation and uninstallation logic is now fully implemented and tested, ready for end-to-end integration.
+
+## Session: 2026-01-13 - sc-027: CHECKPOINT: Can install skills from git repo
+
+### What Was Done
+Successfully validated Phase 3 skills management end-to-end through checkpoint testing:
+- Added Anthropic skills repository as a source
+- Synced source (cloned repo and indexed 17 skills)
+- Searched for and found pdf skill
+- Installed pdf skill globally to ~/.claude/skills/pdf
+- Listed installed skills
+- Uninstalled pdf skill (removed from filesystem)
+
+### Bugs Fixed During Checkpoint
+1. **Missing `sc` CLI entry point**: Added sc alias to pyproject.toml (same as jefe command)
+2. **JSON serialization error in skill sync**: tags and metadata were being stored as Python objects instead of JSON strings
+3. **Missing harness ID in API response**: HarnessResponse schema didn't include the id field needed by CLI
+4. **Skill path resolution**: Service assumed skills at repo root, but Anthropic repo has them in skills/ subdirectory
+5. **Test failure**: DummyAdapter missing uninstall_skill method implementation
+
+### Key Technical Findings
+1. **Database initialization**: The server creates database at `jefe.db` in project root (not `data/jefe.db`)
+2. **Skill repository structure**: Real-world skill repos may have skills in subdirectories (e.g., skills/, plugins/)
+3. **JSON storage in SQLite**: TEXT columns for JSON must store serialized strings, not Python objects
+4. **Harness identification**: While harnesses use name as primary identifier, the ID is still needed for foreign keys
+5. **Port conflicts**: Multiple server restarts can leave processes on port 8000 - use lsof to find and kill
+
+### Implementation Patterns
+1. **Path searching**: When skill location is uncertain, try multiple common patterns (root, skills/, etc.)
+2. **JSON serialization**: Always use json.dumps() when storing in TEXT columns, json.loads() when reading
+3. **Schema completeness**: API response schemas must include all fields that clients depend on
+4. **Test abstract classes**: Test implementations must provide all abstract methods, even if minimal
+
+### Files Modified
+- pyproject.toml: Added sc CLI entry point
+- src/jefe/server/services/skill_source.py: Fixed JSON serialization for tags and metadata
+- src/jefe/server/schemas/harness.py: Added id field to HarnessResponse
+- src/jefe/server/api/harnesses.py: Include id in API responses
+- src/jefe/server/services/skill.py: Added skill path searching logic
+- tests/adapters/test_registry.py: Implemented uninstall_skill in DummyAdapter
+
+### Test Results
+- All 194 tests pass
+- Type checking: ✓ (mypy - 64 source files)
+- Linting: ✓ (ruff - clean)
+- Coverage: 81% overall
+
+### Acceptance Criteria Verification
+✅ Can add git source (sc sources add)
+✅ Sync clones repo and indexes skills (17 skills found)
+✅ Can search and browse skills (sc skills search pdf)
+✅ Can install skill to correct location (~/.claude/skills/pdf verified)
+✅ Can uninstall skill (directory removed from filesystem)
+✅ Ready to proceed to Phase 4
+
+### Next Steps
+Phase 3 skills management is fully functional. Ready to proceed with:
+- Phase 4: Additional harness adapters (Codex CLI, Gemini CLI)
+- Future: Skill version pinning, skill dependencies, skill templates
