@@ -4151,3 +4151,42 @@ The POST /api/knowledge/ingest endpoint is a placeholder that returns 501. To im
 3. Extract or generate tags from content
 4. Handle different content types (HTML, PDF, Markdown)
 5. Add rate limiting and error handling for external requests
+
+## Task: sc-065 - Knowledge CLI Commands
+
+**Summary**: Successfully implemented CLI commands for knowledge base management.
+
+**What was implemented**:
+1. Created `src/jefe/cli/commands/knowledge.py` with three commands:
+   - `sc knowledge ingest <url>` - Fetches URL content and stores in knowledge base with AI-generated summary and tags
+   - `sc knowledge search <query>` - Searches entries with optional query text and tag filtering
+   - `sc knowledge show <id>` - Displays detailed entry information including full content
+2. Registered knowledge commands in `src/jefe/cli/app.py`
+3. Created comprehensive test suite in `tests/cli/test_knowledge.py` (11 tests covering all commands and edge cases)
+
+**Key patterns followed**:
+- Used consistent CLI patterns from existing commands (skills, sources, etc.)
+- Implemented async/sync bridge pattern with `anyio.run()`
+- Added offline mode detection and graceful error handling
+- Used Rich library for formatted table and panel output
+- Followed existing test patterns with `httpx.MockTransport` for API mocking
+
+**Testing results**:
+- All 11 new tests pass
+- All 208 CLI tests pass
+- Type checking passes (mypy)
+- Linting passes (ruff)
+- Test coverage: 89% for knowledge.py module
+
+**Notable learnings**:
+- The project uses both `jefe` and `sc` as CLI aliases (configured in pyproject.toml)
+- Knowledge service uses OpenRouter for LLM-based summarization and tagging
+- CLI commands should handle offline mode gracefully by checking `is_online()` first
+- All CLI tests follow consistent pattern: mock HTTP client, patch helpers, use CliRunner
+
+**Files modified**:
+- src/jefe/cli/commands/knowledge.py (new, 225 lines)
+- src/jefe/cli/app.py (added knowledge_app registration)
+- tests/cli/test_knowledge.py (new, 234 lines)
+
+**Completion**: Task sc-065 closed successfully. All acceptance criteria met.
