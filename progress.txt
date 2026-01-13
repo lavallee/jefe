@@ -1,5 +1,59 @@
 # Jefe - Development Progress
 
+## Session 11 (2026-01-13)
+
+### Epic: sc-E04 - Additional Harnesses
+
+Verified that all V1 harness adapters were already fully implemented.
+
+#### Findings
+
+The Additional Harnesses epic was already complete from previous sessions with:
+
+1. **Adapter Base** (`src/jefe/adapters/base.py`)
+   - `HarnessAdapter` abstract base class with all required methods
+   - `DiscoveredConfig` dataclass for config discovery results
+   - `ConfigKind` literal type for settings/instructions/skills
+
+2. **Adapter Registry** (`src/jefe/adapters/registry.py`)
+   - Auto-discovery of adapter modules using pkgutil
+   - `register_adapter()` for manual registration
+   - `get_adapter()` and `list_adapters()` for retrieval
+
+3. **Claude Code Adapter** (`src/jefe/adapters/claude_code.py`)
+   - Global: `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, `~/.claude/skills/`
+   - Project: `.claude/settings.json`, `CLAUDE.md`, `.claude/skills/`
+   - JSON parsing for settings, markdown for instructions
+
+4. **Codex CLI Adapter** (`src/jefe/adapters/codex_cli.py`)
+   - Global: `~/.codex/config.toml`, `~/.codex/AGENTS.md`, `~/.codex/skills/`
+   - Project: `.codex/config.toml`, `AGENTS.md`, `.codex/skills/`
+   - TOML parsing for settings, AGENTS.override.md takes precedence
+
+5. **Gemini CLI Adapter** (`src/jefe/adapters/gemini_cli.py`)
+   - Global: `~/.gemini/settings.json`, `~/.gemini/GEMINI.md`, `~/.gemini/commands/`
+   - Project: `.gemini/settings.json`, `GEMINI.md`, `.gemini/commands/`
+   - JSON parsing for settings, TOML for custom commands
+
+6. **OpenCode Adapter** (`src/jefe/adapters/opencode.py`)
+   - Global: `~/.config/opencode/opencode.json`, `~/.opencode.json`, `agent/`, `skill/`
+   - Project: `opencode.json`, `.opencode.json`, `.opencode/agent/`, `.opencode/skill/`
+   - JSONC support (JSON with comments)
+
+#### Test Coverage
+
+All adapters have comprehensive tests in `tests/adapters/`:
+- 83 adapter tests covering discovery, parsing, skill installation
+- Registration tests verify auto-discovery works correctly
+- Each adapter has tests for global/project configs, parse fallbacks
+
+#### Feedback Loop Results
+
+All checks pass:
+- mypy: 88 source files with no issues
+- pytest: 496 tests passed (83 adapter tests)
+- ruff: All adapter code passes linting
+
 ## Session 10 (2026-01-13)
 
 ### Epic: sc-E03 - Skills Management
