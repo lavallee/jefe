@@ -162,3 +162,21 @@ Implemented Phase 2 core discovery with project registry, Claude Code adapter, d
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-018 - CHECKPOINT: Can register projects and see configs (2026-01-12)
+
+### Summary
+Validated Phase 2 discovery checkpoint end-to-end with live server + CLI workflow.
+
+### Validation Results
+1. ✓ Server started with `uvicorn jefe.server.app:create_app --factory` (used port 8001 due to 8000 in use)
+2. ✓ Registered project with local path via CLI
+3. ✓ Listed projects successfully
+4. ✓ Discovered harness configs (CLAUDE.md content surfaced)
+5. ✓ Viewed harness configs for claude-code
+6. ✓ Status command reported project/harness/config counts
+7. ✓ Direct API call to /api/projects returned expected payload
+
+### Notes
+- CLI configured via `python -m jefe.cli.app` with `server_url` and `api_key`.
+- Demo directory with `CLAUDE.md` verified discovery output includes instructions content.
