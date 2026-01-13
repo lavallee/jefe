@@ -2550,3 +2550,67 @@ Modified:
 - Model follows all existing patterns: BaseModel inheritance, async repositories, comprehensive tests
 
 The TranslationLog model is now fully functional and ready for use in tracking translation operations.
+
+## Session 9 (2026-01-13)
+
+### Task: sc-043 - Syntax translation rules
+
+Implemented syntax translation logic for converting between harness configuration formats.
+
+#### Implementation Summary
+
+1. **Translation Service Package** (`src/jefe/server/services/translation/`)
+   - Created new package with `__init__.py`, `syntax.py`, and `mappings.py`
+   - Main function: `translate_syntax(content, source_harness, target_harness, config_kind)`
+   - Supports both "instructions" (Markdown) and "settings" (JSON/TOML) translation
+
+2. **Instruction File Translation**
+   - Parses Markdown sections and maps headings between formats
+   - Maps common sections: Project Overview, Getting Started, Development, Build, Test, Commands, etc.
+   - Preserves code blocks, lists, nested sections, and special characters
+   - Adds translation note comment at top of translated files
+
+3. **Settings Translation**
+   - JSON <-> JSON key mapping between harnesses
+   - JSON <-> TOML format conversion (Claude/OpenCode/Gemini use JSON, Codex uses TOML)
+   - JSONC support (strips comments from OpenCode configs)
+   - Maps settings keys: apiKey/api_key, maxTokens/max_tokens, etc.
+   - Preserves unmapped keys, skips unsupported settings
+
+4. **Harness Mappings** (`mappings.py`)
+   - Comprehensive section heading mappings for all harness pairs
+   - Settings key mappings between harness formats
+   - Harness name aliases for flexibility (claude, claude-code, claude_code all work)
+
+5. **Test Coverage** (55 tests)
+   - Tests for all harness pair combinations (4×4 = 16 pairs)
+   - JSON to JSON, JSON to TOML, TOML to JSON settings tests
+   - Content preservation: code blocks, lists, URLs, special chars
+   - Error handling: invalid JSON/TOML raises TranslationError
+   - Roundtrip translation preserves content integrity
+
+#### Acceptance Criteria Verification
+
+✅ Can translate CLAUDE.md to AGENTS.md format
+✅ Can translate between JSON config formats
+✅ Preserves content integrity
+✅ Handles unknown sections gracefully
+✅ Tests cover all harness pairs
+
+#### Key Learnings
+
+- tomli_w library needed for TOML serialization (tomllib only reads)
+- Added tomli_w to mypy overrides (no type stubs)
+- Markdown section parsing handles level 0 preamble content
+- Settings key mappings support None to skip unsupported keys
+
+#### Files Created
+
+- src/jefe/server/services/translation/__init__.py
+- src/jefe/server/services/translation/syntax.py
+- src/jefe/server/services/translation/mappings.py
+- tests/server/test_syntax_translation.py
+
+#### Files Modified
+
+- pyproject.toml (added tomli-w dependency, mypy override)
