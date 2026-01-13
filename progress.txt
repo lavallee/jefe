@@ -3700,3 +3700,107 @@ All checks passed:
 - ruff: No linting issues  
 - pytest: 515 tests passed
 
+
+### Task: sc-059 - Recipe parser and resolver
+
+Implemented a comprehensive recipe parsing and resolution service.
+
+#### Implementation
+
+Created `src/jefe/server/services/recipe.py` with:
+
+1. **RecipeService class**
+   - Depends on session, skill_repo, bundle_repo, harness_repo, source_repo
+   - Integrates with SkillService and BundleService
+
+2. **Parsing functions**
+   - `parse_recipe(path)`: Load and parse YAML from file
+   - `parse_recipe_content(content)`: Parse YAML string
+   - Uses pydantic Recipe schema for validation
+   - Returns detailed validation errors with field names
+
+3. **Resolution functions**
+   - `resolve_recipe(recipe)`: Main resolution entry point
+   - `_resolve_all_skills(recipe)`: Resolve direct skills and bundles
+   - `_resolve_skill_spec(spec)`: Resolve single skill to database ID
+   - `_resolve_bundle(bundle_name)`: Expand bundle to constituent skills
+   - `_map_skills_to_harnesses(recipe, skills)`: Map skills to target harnesses
+   - Returns dict mapping harness names to lists of ResolvedSkill
+
+4. **Version constraint handling**
+   - `_matches_version_constraint(version, constraint)`: Placeholder for semver matching
+   - Currently accepts any version for complex constraints
+   - TODO: Implement proper semver library integration (semantic_version or packaging)
+
+5. **Key features**
+   - Skill deduplication: Direct skill specs take precedence over bundle skills
+   - Error collection: All resolution errors collected before raising
+   - Harness mapping: "*" for all harnesses or specific harness names
+   - Bundle expansion: Bundles resolved to their constituent skills
+
+#### Tests
+
+Created `tests/server/test_recipe.py` with 25 comprehensive tests:
+
+**Parsing tests (13 tests)**
+- File parsing with valid recipe
+- File not found error handling
+- Minimal valid recipe
+- Recipes with bundles
+- Recipes with harness restrictions
+- Version constraints (exact, caret, tilde, gte, wildcard, none)
+- Pinned versions
+- Invalid YAML error handling
+- Non-dictionary YAML error
+- Missing name validation
+- Invalid name format (kebab-case requirement)
+- No content validation
+- Invalid version format
+
+**Resolution tests (10 tests)**
+- Resolve skills with database lookups
+- Harness restriction handling
+- Source not found error
+- Skill not found error
+- Bundle expansion
+- Bundle not found error
+- Combined skills and bundles
+- Skill deduplication
+- Latest version resolution
+
+**Version constraint tests (2 tests)**
+- Exact version matching
+- Wildcard version matching
+
+**Integration tests (1 test)**
+- Real-world recipe example parsing
+
+#### Schema updates
+
+Updated `src/jefe/server/schemas/recipe.py`:
+- Enhanced version constraint regex to allow whitespace after operators
+- Pattern now: `r"^(\^|~|>=|<=|>|<|=)?\s*(\d+)\.(\d+)\.(\d+)(-[\w.]+)?(\+[\w.]+)?$"`
+- Supports both ">=1.2.0" and ">= 1.2.0" formats
+
+#### Testing Results
+
+- All 25 tests pass
+- Code coverage: 76% for recipe.py (45 lines uncovered, mostly in apply_recipe)
+- Type checking: Clean (mypy passes)
+- Linting: Clean (ruff passes)
+
+#### Complexity Management
+
+Refactored `resolve_recipe()` to meet complexity limits (C901):
+- Split into smaller helper functions
+- `_resolve_all_skills()` handles skill and bundle resolution
+- `_map_skills_to_harnesses()` handles harness mapping
+- Reduced cyclomatic complexity from 12 to under 10
+
+#### Design Notes
+
+1. **Error handling strategy**: Collect all errors before raising to give users complete feedback
+2. **Deduplication**: Direct skill specs override bundle skills (user intent > bundle defaults)
+3. **Version constraints**: Basic validation in place, full semver matching deferred
+4. **Harness wildcard**: "*" means apply to all harnesses (requires explicit harness_id in apply)
+
