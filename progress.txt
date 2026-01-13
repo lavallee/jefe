@@ -3866,3 +3866,36 @@ Implemented `jefe projects init --recipe <path>` command to initialize projects 
 - src/jefe/server/api/__init__.py - Registered recipes router
 - tests/cli/test_init.py - New test file with 6 test cases (291 lines)
 
+
+
+## Session 2026-01-13 - Task sc-061: OpenRouter Client
+
+### What I Built
+- Created new LLM module at src/jefe/server/llm/
+- Implemented OpenRouterClient with async HTTP client using httpx
+- Added complete() method for text generation with OpenRouter API
+- Implemented proper error handling for rate limits, auth failures, and general errors
+- Added async context manager support for resource cleanup
+- Created comprehensive test suite with mocked responses (17 tests, all passing)
+
+### Technical Details
+- Used httpx.AsyncClient for async HTTP requests (already a project dependency)
+- API key loaded from OPENROUTER_API_KEY environment variable with fallback support
+- Default model: anthropic/claude-3-haiku (configurable)
+- Proper type annotations for mypy strict mode
+- Error hierarchy: OpenRouterError (base) -> OpenRouterRateLimitError, OpenRouterAuthenticationError
+
+### Testing Approach
+- Mocked httpx responses using AsyncMock and patch
+- Tested initialization with various configurations
+- Tested successful completions with different parameters
+- Tested error scenarios (rate limit, auth, general HTTP, network errors)
+- Tested context manager usage and cleanup
+- All 563 project tests pass
+
+### Patterns Observed
+- Environment variables loaded with os.getenv() (pattern from database.py)
+- Services in src/jefe/server/services/ directory
+- Tests in tests/server/ mirroring source structure
+- Type checking with mypy in strict mode
+- httpx already used in CLI client (src/jefe/cli/client.py)
