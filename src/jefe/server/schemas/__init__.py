@@ -10,6 +10,7 @@ from jefe.server.schemas.projects import (
     ProjectResponse,
     ProjectUpdate,
 )
+from jefe.server.schemas.source import SourceCreate, SourceResponse, SyncResponse
 from jefe.server.schemas.status import StatusResponse
 
 __all__ = [
@@ -24,5 +25,8 @@ __all__ = [
     "ProjectDetailResponse",
     "ProjectResponse",
     "ProjectUpdate",
+    "SourceCreate",
+    "SourceResponse",
     "StatusResponse",
+    "SyncResponse",
 ]
