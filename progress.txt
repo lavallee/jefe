@@ -1438,3 +1438,82 @@ Successfully validated Phase 3 skills management end-to-end through checkpoint t
 Phase 3 skills management is fully functional. Ready to proceed with:
 - Phase 4: Additional harness adapters (Codex CLI, Gemini CLI)
 - Future: Skill version pinning, skill dependencies, skill templates
+
+## Session: 2026-01-13 - sc-028: Codex CLI adapter
+
+### What Was Done
+Successfully implemented a complete harness adapter for OpenAI's Codex CLI with comprehensive test coverage.
+
+### Implementation Summary
+1. **CodexCliAdapter (src/jefe/adapters/codex_cli.py)**
+   - Implements HarnessAdapter interface for Codex CLI
+   - Global config discovery: ~/.codex/ (config.toml, AGENTS.md, skills/)
+   - Project config discovery: .codex/ and AGENTS.md at project root
+   - AGENTS.override.md precedence over AGENTS.md (both global and project)
+   - Multi-format parsing: TOML (using tomllib), JSON, Markdown
+   - Skills installation: ~/.codex/skills (global), .codex/skills (project)
+   - Full install/uninstall support with directory and file handling
+
+2. **Configuration Discovery Pattern**
+   - Follows Codex CLI conventions from official OpenAI documentation
+   - Global: ~/.codex/config.toml, AGENTS[.override].md, skills/
+   - Project: .codex/config.toml, AGENTS[.override].md at root, .codex/skills/
+   - Override files take precedence when present
+   - Returns empty list when config directories don't exist
+
+3. **Comprehensive Test Suite (tests/adapters/test_codex_cli.py)**
+   - 21 tests with 96% code coverage on codex_cli.py
+   - Tests for adapter properties, config discovery (global/project)
+   - Tests for override precedence (AGENTS.override.md vs AGENTS.md)
+   - Tests for multi-format parsing (TOML, JSON, Markdown) with fallbacks
+   - Tests for skills path resolution and installation/uninstallation
+   - Tests for error handling and edge cases
+
+### Key Technical Decisions
+1. **TOML Support**: Used Python 3.11+ built-in tomllib module (project requires 3.11+)
+2. **Type Safety**: Used cast() for JSON/TOML parsing to satisfy mypy's return type requirements
+3. **Precedence Handling**: Check for AGENTS.override.md before AGENTS.md in both global and project discovery
+4. **Content Storage**: Use None for skills directory content (matches ClaudeCodeAdapter pattern)
+5. **Error Handling**: Graceful fallback to plain text for invalid TOML/JSON
+
+### Patterns Learned
+1. **Adapter Registration**: Import and register in src/jefe/adapters/__init__.py
+2. **DiscoveredConfig Structure**: Use harness (not harness_name), no project_path field
+3. **Config Parsing**: Return dict[str, object] for structured data, str for text
+4. **Skills Management**: get_skills_path() returns Path, install_skill() returns installed Path
+5. **Testing Adapters**: Mock Path.home() with tmp_path, test both global and project scopes
+
+### Files Created
+- src/jefe/adapters/codex_cli.py - Codex CLI adapter implementation (253 lines)
+- tests/adapters/test_codex_cli.py - Comprehensive test suite (21 tests, 260 lines)
+
+### Files Modified
+- src/jefe/adapters/__init__.py - Registered CodexCliAdapter
+
+### Test Results
+- All 31 adapter tests pass (21 new Codex CLI tests, 9 Claude Code tests, 1 registry test)
+- Type checking: ✓ (mypy - 65 source files, clean)
+- Linting: ✓ (ruff - clean)
+- Code coverage: 96% on codex_cli.py, 84% on claude_code.py
+
+### Acceptance Criteria Verification
+✅ Discovers Codex CLI global config (config.toml, AGENTS.md, skills/)
+✅ Discovers project-level AGENTS.md and .codex/ configs
+✅ AGENTS.override.md takes precedence over AGENTS.md
+✅ Can install skills to correct paths (~/.codex/skills, .codex/skills)
+✅ Tests pass (21/21 tests passing with 96% coverage)
+
+### Key Learnings
+1. **Codex CLI Structure**: Uses same patterns as Claude Code but with different paths and AGENTS.md convention
+2. **Python 3.11+ Benefits**: Built-in tomllib makes TOML parsing straightforward
+3. **Type Annotations**: cast() needed for json.loads() and tomllib.loads() to satisfy strict type checking
+4. **Test Coverage**: Comprehensive tests prevent regressions and document expected behavior
+5. **Documentation Research**: Web search for Codex CLI docs provided accurate path and convention information
+
+### Integration Notes
+- Codex CLI adapter is now automatically discovered by harness service
+- Skills from any source can be installed to Codex CLI locations
+- Follows same adapter pattern as ClaudeCodeAdapter for consistency
+- Ready for use in production skill installation workflows
+
+The Codex CLI adapter is now fully functional and ready for Phase 4 completion.
