@@ -10,9 +10,9 @@ from jefe.cli import app
 runner = CliRunner()
 
 
-def _make_client(handler) -> httpx.Client:
+def _make_client(handler) -> httpx.AsyncClient:
     transport = httpx.MockTransport(handler)
-    return httpx.Client(base_url="http://test", transport=transport)
+    return httpx.AsyncClient(base_url="http://test", transport=transport)
 
 
 def test_harnesses_discover_command() -> None:

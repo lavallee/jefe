@@ -91,3 +91,15 @@ Implemented Phase 2 core discovery with project registry, Claude Code adapter, d
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-012 - Projects CLI commands (2026-01-12)
+
+### Summary
+- Added async HTTP client helper for CLI calls with connection error messaging.
+- Expanded projects CLI with list/add/show/remove and remote manifestation support.
+- Updated CLI tests for projects, status, and harnesses to cover new behavior.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`

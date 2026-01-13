@@ -1,10 +1,14 @@
 """Status CLI command."""
 
+from typing import Any
+
+import anyio
+import httpx
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from jefe.cli.api import create_client, get_api_key
+from jefe.cli.client import create_client, get_api_key, get_server_url
 
 status_app = typer.Typer(name="status", help="Show registry status")
 console = Console()
@@ -17,12 +21,30 @@ def _require_api_key() -> None:
         raise typer.Exit(code=1)
 
 
+async def _request(
+    client: httpx.AsyncClient,
+    method: str,
+    url: str,
+    **kwargs: Any,
+) -> httpx.Response:
+    try:
+        return await client.request(method, url, **kwargs)
+    except httpx.RequestError as exc:
+        console.print(f"[red]Unable to reach server at {get_server_url()}.[/red]")
+        console.print(f"[dim]{exc}[/dim]")
+        raise typer.Exit(code=1) from exc
+
+
 @status_app.callback(invoke_without_command=True)
 def show_status() -> None:
     """Show current project and config counts."""
     _require_api_key()
-    with create_client() as client:
-        response = client.get("/api/status")
+    anyio.run(_show_status_async)
+
+
+async def _show_status_async() -> None:
+    async with create_client() as client:
+        response = await _request(client, "GET", "/api/status")
 
     if response.status_code != 200:
         console.print(f"[red]Failed to load status ({response.status_code}).[/red]")
