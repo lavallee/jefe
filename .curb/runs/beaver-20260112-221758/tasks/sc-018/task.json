@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-018",
+  "title": "CHECKPOINT: Can register projects and see configs",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T04:14:01Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T04:17:50Z",
+  "exit_code": 0
+}
