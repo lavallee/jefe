@@ -9,7 +9,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from jefe.cli.client import create_client, get_api_key, get_server_url
+from jefe.cli.cache.manager import CacheManager
+from jefe.cli.client import create_client, get_api_key, get_server_url, is_online
 
 skills_app = typer.Typer(name="skills", help="Browse and install skills")
 console = Console()
@@ -221,6 +222,24 @@ async def _list_available_skills(client: httpx.AsyncClient) -> None:
         console.print("Add a skill source with: [cyan]sc sources add[/cyan]")
         return
 
+    # Cache the skills for offline access
+    cache = CacheManager()
+    try:
+        for skill in skills:
+            cache.cache_skill(
+                server_id=skill["id"],
+                source_id=skill.get("source_id"),
+                name=skill["name"],
+                display_name=skill.get("display_name"),
+                description=skill.get("description"),
+                version=skill.get("version"),
+                author=skill.get("author"),
+                tags=skill.get("tags"),
+                metadata=skill.get("metadata_json"),
+            )
+    finally:
+        cache.close()
+
     _render_skills_table(skills, title="Available Skills")
 
 
@@ -235,6 +254,45 @@ def list_skills(
 
 
 async def _list_skills_async(installed: bool, project_name: str | None) -> None:
+    # Check if server is online
+    online = await is_online()
+
+    if not online:
+        # Fall back to cache for available skills
+        if not installed:
+            console.print("[yellow]⚠ Offline mode - showing cached data[/yellow]")
+            cache = CacheManager()
+            try:
+                cached_skills = cache.get_all_skills()
+                if not cached_skills:
+                    console.print("No cached skills available.")
+                    console.print("Connect to server to see available skills.")
+                    return
+
+                # Convert cached skills to dict format for rendering
+                skills = [
+                    {
+                        "id": s.server_id,
+                        "name": s.name,
+                        "display_name": s.display_name,
+                        "version": s.version,
+                        "author": s.author,
+                        "description": s.description,
+                    }
+                    for s in cached_skills
+                ]
+                _render_skills_table(skills, title="Available Skills (Cached)")
+            finally:
+                cache.close()
+            return
+        else:
+            # Installed skills require server connection for now
+            console.print("[yellow]⚠ Offline mode[/yellow]")
+            console.print("Viewing installed skills requires server connection.")
+            console.print("Connect to server to see installed skills.")
+            raise typer.Exit(code=1)
+
+    # Online - fetch from server
     async with create_client() as client:
         if installed:
             await _list_installed_skills(client, project_name)

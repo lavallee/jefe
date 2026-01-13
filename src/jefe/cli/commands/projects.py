@@ -9,7 +9,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from jefe.cli.client import create_client, get_api_key, get_server_url
+from jefe.cli.cache.manager import CacheManager
+from jefe.cli.client import create_client, get_api_key, get_server_url, is_online
 
 projects_app = typer.Typer(name="projects", help="Manage project registry")
 console = Console()
@@ -138,6 +139,35 @@ def list_projects() -> None:
 
 
 async def _list_projects_async() -> None:
+    # Check if server is online
+    online = await is_online()
+
+    if not online:
+        # Fall back to cache
+        console.print("[yellow]⚠ Offline mode - showing cached data[/yellow]")
+        cache = CacheManager()
+        try:
+            cached_projects = cache.get_all_projects()
+            if not cached_projects:
+                console.print("No cached projects available.")
+                return
+
+            # Convert cached projects to dict format for rendering
+            projects: list[dict[str, Any]] = [
+                {
+                    "id": p.server_id,
+                    "name": p.name,
+                    "description": p.description,
+                    "manifestations": [],  # Not cached yet
+                }
+                for p in cached_projects
+            ]
+            _render_projects_table(projects)
+        finally:
+            cache.close()
+        return
+
+    # Online - fetch from server
     async with create_client() as client:
         response = await _request(client, "GET", "/api/projects")
 
@@ -148,6 +178,18 @@ async def _list_projects_async() -> None:
     if not projects:
         console.print("No projects registered.")
         return
+
+    # Cache the projects
+    cache = CacheManager()
+    try:
+        for project in projects:
+            cache.cache_project(
+                server_id=project["id"],
+                name=project["name"],
+                description=project.get("description"),
+            )
+    finally:
+        cache.close()
 
     _render_projects_table(projects)
 
@@ -211,6 +253,39 @@ def show_project(
 
 
 async def _show_project_async(name_or_id: str) -> None:
+    # Check if server is online
+    online = await is_online()
+
+    if not online:
+        # Fall back to cache
+        console.print("[yellow]⚠ Offline mode - showing cached data[/yellow]")
+        cache = CacheManager()
+        try:
+            # Try to find project in cache
+            cached_project = None
+            if name_or_id.isdigit():
+                cached_project = cache.projects.get_by_server_id(int(name_or_id))
+            else:
+                cached_project = cache.get_project(name_or_id)
+
+            if not cached_project:
+                console.print(f"[red]Project '{name_or_id}' not found in cache.[/red]")
+                console.print("Connect to server to see full project list.")
+                raise typer.Exit(code=1)
+
+            console.print(
+                f"[bold]{cached_project.name}[/bold] (id={cached_project.server_id})"
+            )
+            if cached_project.description:
+                console.print(cached_project.description)
+            console.print(
+                "[dim]Note: Manifestations and configs require server connection[/dim]"
+            )
+        finally:
+            cache.close()
+        return
+
+    # Online - fetch from server
     async with create_client() as client:
         project_id = await _resolve_project_id(client, name_or_id)
         response = await _request(client, "GET", f"/api/projects/{project_id}")
@@ -219,6 +294,18 @@ async def _show_project_async(name_or_id: str) -> None:
         _fail_request("load project", response)
 
     project = response.json()
+
+    # Cache the project
+    cache = CacheManager()
+    try:
+        cache.cache_project(
+            server_id=project["id"],
+            name=project["name"],
+            description=project.get("description"),
+        )
+    finally:
+        cache.close()
+
     console.print(f"[bold]{project['name']}[/bold] (id={project['id']})")
     if project.get("description"):
         console.print(project["description"])
