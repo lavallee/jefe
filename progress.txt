@@ -3635,3 +3635,68 @@ Created `tests/cli/test_bundles.py` with tests for:
 - The API returns success_count, failed_count, and errors list from bundle application
 - Progress indication during async operations can be done with Rich Progress context manager
 - All CLI commands follow consistent pattern: sync entry point → anyio.run() → async implementation
+
+## Session 13 (2026-01-13)
+
+### Task: sc-058 - Recipe File Format Spec
+
+Successfully defined the YAML format for recipe files with complete documentation, validation schemas, and examples.
+
+#### Implementation
+
+1. **Documentation** (`docs/recipe-format.md`)
+   - Comprehensive format specification with field descriptions
+   - Version constraint syntax (semver: ^, ~, >=, exact)
+   - Usage examples and best practices
+   - 5 detailed example recipes
+
+2. **Pydantic Models** (`src/jefe/server/schemas/recipe.py`)
+   - `SkillSpec`: Skill specification with source, name, version, pinned flag
+   - `Recipe`: Main recipe schema with name, description, harnesses, skills, bundles
+   - Request/Response models: `RecipeLoadRequest`, `RecipeApplyRequest`, `RecipeApplyResponse`, `RecipeResponse`
+   - `RecipeValidationError`: Validation error details
+   - Field validators for name format (kebab-case) and version constraints (semver regex)
+
+3. **JSON Schema** (`schemas/recipe.schema.json`)
+   - JSON Schema Draft-07 compliant
+   - Defines SkillSpec as reusable $defs
+   - Validates name pattern (kebab-case), version constraints (semver)
+   - Ensures at least one of skills or bundles is specified (anyOf)
+   - Supports external validation tools
+
+4. **Example Recipes** (`examples/recipes/`)
+   - `web-ui.yaml`: React/TypeScript web development stack
+   - `cli-tool.yaml`: Python CLI development with Typer/Click
+   - `data-science.yaml`: Pandas/NumPy/scikit-learn toolkit
+   - `minimal.yaml`: Simplest possible recipe structure
+   - `bundles-only.yaml`: Security audit tools (bundles only)
+
+#### Key Design Patterns
+
+1. **Version Constraints**: Supports semver operators (^, ~, >=, <=, >, <, =, *)
+2. **Harness Targeting**: Empty list means "all harnesses"
+3. **Flexibility**: Skills or bundles or both (validated via anyOf in JSON Schema)
+4. **Validation**: Multi-level validation (Pydantic + JSON Schema)
+5. **Naming Convention**: Kebab-case for recipe names (e.g., web-ui-tools)
+
+#### Schema Exports
+
+Updated `src/jefe/server/schemas/__init__.py` to export:
+- `Recipe`, `SkillSpec`
+- `RecipeLoadRequest`, `RecipeApplyRequest`, `RecipeApplyResponse`, `RecipeResponse`
+- `RecipeValidationError`
+
+#### All Acceptance Criteria Met
+
+✓ Format documented  
+✓ JSON Schema created  
+✓ Example recipes provided  
+✓ Pydantic model validates  
+
+#### Feedback Loops
+
+All checks passed:
+- mypy: No type errors
+- ruff: No linting issues  
+- pytest: 515 tests passed
+
