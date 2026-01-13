@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from jefe.data.models.project import ManifestationType
+from jefe.data.models.manifestation import ManifestationType
 from jefe.server.schemas.harnesses import HarnessConfigResponse
 
 

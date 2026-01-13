@@ -771,3 +771,18 @@ Updated default SQLite database filename to `jefe.db` for app and Alembic defaul
 - Added pytest bootstrap to include `src/` on sys.path so tests can import `jefe` without editable installs.
 - Feedback loops: `mypy src/jefe`, `ruff check src/jefe tests`, `pytest`.
 - `bd close sc-E01` succeeded; noted beads warnings about read-only export hash updates.
+
+## Session 19 (2026-01-12)
+
+### Task: sc-010 - Project and Manifestation models
+
+- Split project and manifestation models into dedicated modules with ManifestationType enum.
+- Added project/manifestation repositories with list_all and get_with_manifestations helpers.
+- Added repository tests covering create, query with manifestations, update/delete, and cascade delete.
+- Updated model imports across API/services and refreshed AGENTS.md per bd onboarding guidance.
+
+#### Feedback Loop Results
+
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`

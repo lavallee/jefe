@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from jefe.adapters import DiscoveredConfig, get_adapter, get_adapters
-from jefe.data.models.project import ManifestationType, Project
+from jefe.data.models.manifestation import ManifestationType
+from jefe.data.models.project import Project
 
 
 async def discover_all(session: AsyncSession) -> list[DiscoveredConfig]:
