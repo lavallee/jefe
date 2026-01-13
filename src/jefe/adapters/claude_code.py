@@ -22,8 +22,8 @@ class ClaudeCodeAdapter(HarnessAdapter):
 
     def discover_global(self) -> list[DiscoveredConfig]:
         base_dir = Path.home() / ".claude"
-        results = self._discover_in_dir(base_dir, scope="global")
-        results.extend(self._discover_skills(base_dir, scope="global"))
+        results = self._discover_in_dir(base_dir, scope=ConfigScope.GLOBAL)
+        results.extend(self._discover_skills(base_dir, scope=ConfigScope.GLOBAL))
         return results
 
     def discover_project(
@@ -35,7 +35,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
         results.extend(
             self._discover_in_dir(
                 project_path / ".claude",
-                scope="project",
+                scope=ConfigScope.PROJECT,
                 project_id=project_id,
                 project_name=project_name,
             )
@@ -45,7 +45,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
         results.extend(
             self._discover_file(
                 instructions_path,
-                scope="project",
+                scope=ConfigScope.PROJECT,
                 kind="instructions",
                 project_id=project_id,
                 project_name=project_name,
@@ -55,7 +55,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
         results.extend(
             self._discover_skills(
                 project_path / ".claude",
-                scope="project",
+                scope=ConfigScope.PROJECT,
                 project_id=project_id,
                 project_name=project_name,
             )
@@ -150,7 +150,7 @@ class ClaudeCodeAdapter(HarnessAdapter):
         return path.read_text()
 
     def get_skills_path(self, scope: ConfigScope, project_path: Path | None = None) -> Path:
-        if scope == "global":
+        if scope == ConfigScope.GLOBAL:
             return Path.home() / ".claude" / "skills"
 
         if project_path is None:

@@ -49,6 +49,9 @@ def test_project_endpoints_include_configs(client_with_key: tuple[TestClient, st
     assert response.status_code == 201
     project_id = response.json()["id"]
 
+    discovery = client.post("/api/harnesses/discover", headers={"X-API-Key": api_key})
+    assert discovery.status_code == 200
+
     detail = client.get(
         f"/api/projects/{project_id}",
         headers={"X-API-Key": api_key},

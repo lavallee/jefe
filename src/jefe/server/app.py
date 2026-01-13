@@ -36,6 +36,12 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         print("Use it in the X-API-Key header for all API requests.")
         print("=" * 70 + "\n")
 
+    from jefe.data.database import AsyncSessionLocal
+    from jefe.server.services.harness import HarnessService
+
+    async with AsyncSessionLocal() as session:
+        await HarnessService(session).seed_harnesses()
+
     yield
     # Shutdown
     await close_db()

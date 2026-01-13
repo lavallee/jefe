@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jefe.adapters import get_adapters
 from jefe.data.database import get_session
+from jefe.data.models.harness import Harness
+from jefe.data.models.harness_config import HarnessConfig
 from jefe.data.models.manifestation import Manifestation
 from jefe.data.models.project import Project
 from jefe.server.auth import APIKey
 from jefe.server.schemas.status import StatusResponse
-from jefe.server.services.discovery import discover_all
 
 router = APIRouter()
 
@@ -22,12 +22,12 @@ async def get_status(
     """Return counts for the current registry."""
     projects_count = await session.scalar(select(func.count(Project.id)))
     manifestations_count = await session.scalar(select(func.count(Manifestation.id)))
-    configs = await discover_all(session)
-    harnesses_count = len(get_adapters())
+    configs_count = await session.scalar(select(func.count(HarnessConfig.id)))
+    harnesses_count = await session.scalar(select(func.count(Harness.id)))
 
     return StatusResponse(
         projects=projects_count or 0,
         manifestations=manifestations_count or 0,
-        configs=len(configs),
-        harnesses=harnesses_count,
+        configs=configs_count or 0,
+        harnesses=harnesses_count or 0,
     )

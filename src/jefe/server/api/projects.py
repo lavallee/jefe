@@ -1,5 +1,6 @@
 """Project API endpoints."""
 
+import json
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,12 +8,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from jefe.adapters import DiscoveredConfig
 from jefe.data.database import get_session
+from jefe.data.models.harness import Harness
+from jefe.data.models.harness_config import HarnessConfig
 from jefe.data.models.manifestation import Manifestation, ManifestationType
 from jefe.data.models.project import Project
 from jefe.server.auth import APIKey
-from jefe.server.schemas.harnesses import HarnessConfigResponse
+from jefe.server.schemas.harness import HarnessConfigResponse
 from jefe.server.schemas.projects import (
     ManifestationCreate,
     ManifestationResponse,
@@ -21,7 +23,7 @@ from jefe.server.schemas.projects import (
     ProjectResponse,
     ProjectUpdate,
 )
-from jefe.server.services.discovery import discover_for_project
+from jefe.server.services.harness import HarnessService
 
 router = APIRouter()
 
@@ -45,19 +47,47 @@ def _project_to_response(project: Project) -> ProjectResponse:
     )
 
 
-def _configs_to_response(configs: list[DiscoveredConfig]) -> list[HarnessConfigResponse]:
+async def _configs_to_response(
+    session: AsyncSession, configs: list[HarnessConfig]
+) -> list[HarnessConfigResponse]:
+    harnesses = await HarnessService(session).list_harnesses()
+    harness_by_id = {harness.id: harness for harness in harnesses}
+
     return [
         HarnessConfigResponse(
-            harness=config.harness,
+            harness=_get_harness_name(harness_by_id, config.harness_id),
             scope=config.scope,
             kind=config.kind,
             path=str(config.path),
-            content=config.content,
+            content=_parse_config_content(config.path, config.content),
+            content_hash=config.content_hash,
             project_id=config.project_id,
-            project_name=config.project_name,
+            project_name=config.project.name if config.project else None,
         )
         for config in configs
     ]
+
+
+def _parse_config_content(path: str, content: str | None) -> dict[str, object] | str | None:
+    if content is None:
+        return None
+    if path.lower().endswith(".json"):
+        try:
+            data = json.loads(content)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            return content
+    return content
+
+
+def _get_harness_name(harness_by_id: dict[int, Harness], harness_id: int | None) -> str:
+    if harness_id is None:
+        return "unknown"
+    harness = harness_by_id.get(harness_id)
+    if harness is None:
+        return "unknown"
+    return harness.name
 
 
 @router.get("/api/projects", response_model=list[ProjectResponse])
@@ -128,13 +158,16 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    configs = await discover_for_project(session, project_id=project.id)
+    configs = await HarnessService(session).list_configs(
+        project_id=project.id,
+        include_global=False,
+    )
     return ProjectDetailResponse(
         id=project.id,
         name=project.name,
         description=project.description,
         manifestations=[_manifestation_to_response(m) for m in project.manifestations],
-        configs=_configs_to_response(configs),
+        configs=await _configs_to_response(session, configs),
     )
 
 

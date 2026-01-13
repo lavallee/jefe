@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response validation."""
 
 from jefe.server.schemas.common import ErrorResponse, HealthResponse, MessageResponse
-from jefe.server.schemas.harnesses import HarnessConfigResponse, HarnessInfo
+from jefe.server.schemas.harness import HarnessConfigResponse, HarnessResponse
 from jefe.server.schemas.projects import (
     ManifestationCreate,
     ManifestationResponse,
@@ -15,7 +15,7 @@ from jefe.server.schemas.status import StatusResponse
 __all__ = [
     "ErrorResponse",
     "HarnessConfigResponse",
-    "HarnessInfo",
+    "HarnessResponse",
     "HealthResponse",
     "ManifestationCreate",
     "ManifestationResponse",

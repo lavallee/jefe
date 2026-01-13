@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-ConfigScope = Literal["global", "project"]
+from jefe.data.models.harness_config import ConfigScope
+
 ConfigKind = Literal["settings", "instructions", "skills"]
 
 
