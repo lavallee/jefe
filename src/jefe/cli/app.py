@@ -10,6 +10,7 @@ from jefe.cli.commands.projects import projects_app
 from jefe.cli.commands.skills import skills_app
 from jefe.cli.commands.sources import sources_app
 from jefe.cli.commands.status import status_app
+from jefe.cli.commands.sync import sync_app
 from jefe.cli.commands.translate import translate_app
 
 app = typer.Typer(
@@ -26,6 +27,7 @@ app.add_typer(harnesses_app, name="harnesses")
 app.add_typer(sources_app, name="sources")
 app.add_typer(skills_app, name="skills")
 app.add_typer(status_app, name="status")
+app.add_typer(sync_app, name="sync")
 app.add_typer(translate_app, name="translate")
 
 
