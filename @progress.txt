@@ -115,3 +115,14 @@ Implemented Phase 2 core discovery with project registry, Claude Code adapter, d
 - Type checking: `mypy src/jefe`
 - Tests: `pytest`
 - Linting: `ruff check src/jefe tests`
+
+## Session: sc-014 - Claude Code adapter (2026-01-12)
+
+### Summary
+- Expanded Claude Code adapter tests to cover JSON/Markdown parsing, skills path resolution, and skill installation for files and directories.
+- Added fixture files for Claude Code settings and instructions.
+
+### Validation Results
+- Type checking: `mypy src/jefe`
+- Linting: `ruff check src/jefe tests`
+- Tests: `pytest`
