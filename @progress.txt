@@ -64,3 +64,476 @@ Updated test imports to align with current module exports and centralized import
 - ✓ Type checking: `mypy src/jefe`
 - ✓ Tests: `pytest`
 - ✓ Linting: `ruff check src/jefe`
+
+## Session: sc-E02 - Core Discovery (2026-01-12)
+
+### Summary
+Implemented Phase 2 core discovery with project registry, Claude Code adapter, discovery APIs, and CLI commands.
+
+### Key Updates
+- Added Project and Manifestation models with repositories, migrations, and discovery services.
+- Implemented Claude Code adapter to discover settings, instructions, and skills paths.
+- Added projects/harnesses/status APIs plus CLI commands with tests.
+- Added status endpoint and discovery responses for configs across projects.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe`
+
+## Session: sc-011 - Projects API endpoints (2026-01-12)
+
+### Summary
+- Added project update/delete endpoints with validation for empty updates and name conflicts.
+- Added projects API tests covering CRUD, manifestation add/remove, and OpenAPI coverage.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-012 - Projects CLI commands (2026-01-12)
+
+### Summary
+- Added async HTTP client helper for CLI calls with connection error messaging.
+- Expanded projects CLI with list/add/show/remove and remote manifestation support.
+- Updated CLI tests for projects, status, and harnesses to cover new behavior.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-013 - Harness adapter base class (2026-01-12)
+
+### Summary
+- Added harness adapter registry and expanded base interface with skills support.
+- Updated Claude Code adapter to implement the new interface.
+- Added registry tests.
+
+### Validation Results
+- Type checking: `mypy src/jefe`
+- Tests: `pytest`
+- Linting: `ruff check src/jefe tests`
+
+## Session: sc-014 - Claude Code adapter (2026-01-12)
+
+### Summary
+- Expanded Claude Code adapter tests to cover JSON/Markdown parsing, skills path resolution, and skill installation for files and directories.
+- Added fixture files for Claude Code settings and instructions.
+
+### Validation Results
+- Type checking: `mypy src/jefe`
+- Linting: `ruff check src/jefe tests`
+- Tests: `pytest`
+
+## Session: sc-015 - HarnessConfig model and API (2026-01-12)
+
+### Summary
+- Added Harness and HarnessConfig models with repositories, migrations, and startup seeding for Claude Code.
+- Implemented HarnessService to persist discovered configs with content hashing and updated API endpoints to serve stored configs.
+- Added harness API tests covering seeded harnesses and content hash updates, and updated discovery tests for persisted configs.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-016 - Harnesses CLI commands (2026-01-12)
+
+### Summary
+- Added harness list/show/discover CLI commands with content highlighting and project path filtering.
+- Extended harness discovery API to accept optional project_id.
+- Added CLI tests for harness list/show/discover.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-017 - Status command (2026-01-12)
+
+### Summary
+- Expanded the status CLI command to aggregate health, status, projects, harnesses, and config data into Rich panels.
+- Added project-specific status output, recent activity reporting, and offline cached status fallback.
+- Updated status CLI tests to cover overview, project mode, and offline cache behavior.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe`
+- ✓ Tests: `pytest`
+- ✓ Linting: `ruff check src/jefe tests`
+
+## Session: sc-018 - CHECKPOINT: Can register projects and see configs (2026-01-12)
+
+### Summary
+Validated Phase 2 discovery checkpoint end-to-end with live server + CLI workflow.
+
+### Validation Results
+1. ✓ Server started with `uvicorn jefe.server.app:create_app --factory` (used port 8001 due to 8000 in use)
+2. ✓ Registered project with local path via CLI
+3. ✓ Listed projects successfully
+4. ✓ Discovered harness configs (CLAUDE.md content surfaced)
+5. ✓ Viewed harness configs for claude-code
+6. ✓ Status command reported project/harness/config counts
+7. ✓ Direct API call to /api/projects returned expected payload
+
+### Notes
+- CLI configured via `python -m jefe.cli.app` with `server_url` and `api_key`.
+- Demo directory with `CLAUDE.md` verified discovery output includes instructions content.
+
+## Session: sc-019 - SkillSource and Skill models (2026-01-12)
+
+### Summary
+Implemented data models and repositories for tracking skill sources (git repos, marketplaces) and individual skills.
+
+### Implementation Details
+1. **SkillSource model** (src/jefe/data/models/skill_source.py)
+   - Fields: name (unique), source_type, url, description, sync_status, last_synced_at
+   - Enums: SourceType (GIT, MARKETPLACE), SyncStatus (PENDING, SYNCING, SYNCED, ERROR)
+   - One-to-many relationship with Skill
+
+2. **Skill model** (src/jefe/data/models/skill.py)
+   - Fields: source_id (FK), name, display_name, description, version, author, tags, metadata_json
+   - JSON helper methods: get_tags_list(), set_tags_list(), get_metadata_dict(), set_metadata_dict()
+   - Many-to-one relationship with SkillSource
+   - Note: Used `metadata_json` instead of `metadata` (reserved by SQLAlchemy)
+
+3. **Alembic migration** (alembic/versions/39153ba35d7c_add_skills_and_skill_sources.py)
+   - Creates skill_sources table with unique name constraint
+   - Creates skills table with CASCADE delete on source_id FK
+   - Proper enum handling for SQLite
+
+4. **Repositories**
+   - SkillSourceRepository: methods for get_by_name, list_by_type, list_by_status, get_with_skills
+   - SkillRepository: methods for list_by_source, list_by_name, search_by_tag, list_by_author, get_with_source
+   - All repositories extend BaseRepository with standard CRUD operations
+
+5. **Tests** (tests/data/test_skill_repo.py)
+   - 18 comprehensive test cases covering all repository methods
+   - Tests for cascade delete, filtering, eager loading, JSON helpers
+   - 100% coverage for skill and skill_source repositories
+
+### Key Learnings
+- **SQLAlchemy reserved names**: `metadata` is a reserved attribute in declarative models, must use alternative names
+- **Type safety with JSON**: Added runtime type checks for JSON parsing to satisfy mypy strict typing
+- **Migration workflow**: Database was out of sync, used `alembic stamp head` to fix before autogenerate
+- **PYTHONPATH requirement**: Alembic needs `PYTHONPATH=src` when running without editable install
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe` - No errors
+- ✓ Tests: `pytest` - 94 tests pass (18 new skill tests)
+- ✓ Linting: `ruff check src/jefe` - All checks passed
+- ✓ Coverage: 78% overall, 100% for new skill modules
+
+### Next Steps
+Skill models are ready for integration with:
+- Discovery services to fetch skills from sources
+- CLI commands to list/manage skills
+- API endpoints for skill browsing
+- Sync logic to update skill metadata from sources
+
+## Session 2026-01-13: Gemini CLI Configuration Research (sc-029)
+
+### Key Learnings
+
+1. **Config System Architecture**: Gemini CLI uses a hierarchical JSON config system with 4 precedence levels (system-defaults → user settings → project settings → system settings). User settings live at `~/.gemini/settings.json`.
+
+2. **Custom Commands via TOML**: Skills/commands are TOML files in `~/.gemini/commands/` (global) or `.gemini/commands/` (project). They support:
+   - `{{args}}` for argument injection (context-aware escaping)
+   - `!{shell command}` for dynamic shell execution
+   - `@{path}` for file/directory content injection
+   - Subdirectories map to namespaced commands (e.g., `git/commit.toml` → `/git:commit`)
+
+3. **Context Files (GEMINI.md)**: Hierarchical instruction loading from global (`~/.gemini/GEMINI.md`), project ancestors, and subdirectories. Supports modular imports via `@path/to/file.md` syntax. View with `/memory show`.
+
+4. **Skills Configuration**: Experimental feature enabled via `experimental.skills: true` with selective disabling through `skills.disabled` array in settings.json.
+
+5. **MCP Integration**: `mcpServers` section in settings.json enables custom tool integration through Model-Context Protocol with command/URL/env configuration.
+
+### Implementation Implications for Jefe
+
+- Claude Code adapter should look for custom commands in `.gemini/commands/` using TOML format
+- GEMINI.md files can be used for project context (similar to Claude Code's context files)
+- Environment variable expansion in settings files (`$VAR` / `${VAR}`) is supported
+- Skills are configured in settings.json, not as separate files
+
+### Documentation
+
+Created comprehensive research doc at `docs/gemini-cli-research.md` covering:
+- All configuration file locations and precedence
+- JSON settings structure with all categories
+- TOML custom command format with examples
+- GEMINI.md context file system
+- Skills and MCP integration patterns
+- CLI commands and flags reference
+
+## Session: sc-040 - Navigation and layout polish (2026-01-13)
+
+### Summary
+Successfully implemented comprehensive navigation and layout improvements for the Jefe web UI with sidebar navigation, active page highlighting, responsive design, and polished styling.
+
+### Implementation Details
+
+1. **Sidebar Navigation** (`src/jefe/web/templates/base.html`)
+   - Converted from top navbar to left sidebar (w-64, dark gray bg-gray-900)
+   - Dark theme with indigo-600 active state
+   - All 5 nav links: Dashboard, Projects, Harnesses, Skills, Sources
+   - Active page detection using `request.url.path` matching
+
+2. **Active Page Highlighting**
+   - Dashboard: Detects `request.url.path == '/'`
+   - Projects: Detects `'/projects' in request.url.path`
+   - Harnesses: Detects `'/harnesses' in request.url.path`
+   - Skills: Detects `'/skills' in request.url.path`
+   - Sources: Detects `'/sources' in request.url.path`
+   - Active state: `bg-indigo-600 text-white`
+   - Hover state: `text-gray-300 hover:bg-gray-800`
+
+3. **Responsive Layout**
+   - Main flex layout: sidebar (fixed) + content area (flex-1)
+   - Content area has top bar with page title
+   - Proper scrolling behavior (overflow-auto on content)
+   - All pages integrated with new layout
+
+4. **Flash Messages** (Styled)
+   - Color-coded by type: success (green), error (red), warning (yellow), info (blue)
+   - Included icons (checkmark, X, warning triangle, info circle)
+   - Consistent padding and border styling
+   - Located in content area under page title
+
+5. **Favicon**
+   - SVG data URI favicon with blue "J" logo
+   - No external files needed
+   - Displays in browser tabs
+
+6. **HTMX Loading Indicators**
+   - CSS spinner animation (@keyframes spin)
+   - htmx-indicator class setup with display toggle
+   - Smooth transitions for element swapping
+
+7. **Page Titles**
+   - Added `{% block page_title %}` to base.html for consistent top bar
+   - Updated all templates: dashboard, projects, harnesses, skills
+   - Dynamic titles in detail pages (project/harness names)
+
+### Files Modified
+- `src/jefe/web/templates/base.html` - Complete redesign with sidebar layout
+- `src/jefe/web/templates/dashboard.html` - Removed duplicate header, added page_title
+- `src/jefe/web/templates/projects/list.html` - Added page_title, removed duplicate header
+- `src/jefe/web/templates/projects/detail.html` - Added page_title
+- `src/jefe/web/templates/harnesses/list.html` - Added page_title, removed duplicate header
+- `src/jefe/web/templates/harnesses/detail.html` - Added page_title
+- `src/jefe/web/templates/skills/browser.html` - Added page_title, removed duplicate header
+
+### Acceptance Criteria Met
+✓ Sidebar navigation works - Implemented with 5 nav links
+✓ Active page highlighted - Dynamic highlighting based on URL path
+✓ Responsive on mobile - Proper flex layout and scrolling
+✓ Consistent styling - All pages use same base layout and card styles
+✓ Loading indicators show - CSS animations for htmx requests
+
+### Validation Results
+- ✓ Tests: 267 tests pass (all pass)
+- ✓ Linting: `ruff check src/jefe` - All checks passed
+- ✓ Type checking: `mypy src/jefe` - No issues found
+
+### Key Learnings
+- Tailwind CSS responsive utilities handle layout without media queries
+- HTMX indicator pattern uses CSS display toggle with htmx class
+- Jinja2 dynamic URL detection in templates for active nav highlighting
+- Flex layouts with fixed sidebar + flex-1 content create responsive UI
+- SVG favicon via data URI eliminates static file dependency
+
+## Session: sc-041 - CHECKPOINT: Web UI functional (2026-01-13)
+
+### Summary
+Successfully validated Phase 5 web interface with comprehensive functional testing. All acceptance criteria met with full feedback loop validation.
+
+### Validation Results
+
+**Dashboard**
+- ✓ Displays correctly with stats cards (Projects, Skills, Harnesses, Sources)
+- ✓ Shows recent activity section
+- ✓ Responsive layout with Tailwind CSS
+
+**Project Management**
+- ✓ Created test project via web form
+- ✓ Project appears in projects list
+- ✓ Project detail page displays correctly
+- ✓ Edit and delete functionality available
+
+**Skills Browsing**
+- ✓ Skills browser page loads with all available skills
+- ✓ Search functionality working
+- ✓ Filter by source dropdown available
+- ✓ Skill cards display with descriptions
+- ✓ Install modal implemented and functional
+
+**Harness Config Viewing**
+- ✓ Harnesses list shows all available harnesses
+- ✓ Detail pages display config information
+- ✓ Configs grouped by scope (global/project)
+- ✓ Discovery trigger buttons available
+
+**Responsive Design**
+- ✓ Proper viewport meta tag set
+- ✓ Tailwind CSS responsive utilities in use
+- ✓ Sidebar navigation with flex layout
+- ✓ Mobile-friendly content area with proper scrolling
+
+**Feedback Loops**
+- ✓ Type checking: No issues found (mypy)
+- ✓ Tests: 267 tests pass (100% pass rate)
+- ✓ Linting: All checks passed (ruff)
+
+### Architecture Observations
+- Web routes in `src/jefe/web/routes.py` cover all major features (234 lines)
+- Templates use Jinja2 with Tailwind CSS for styling
+- HTMX integration for dynamic form submissions and content updates
+- Database queries use SQLAlchemy async patterns
+- All models properly related (Project → Manifestation, Skill → Source, etc.)
+
+### Key Findings
+- Navigation highlighting works correctly with `request.url.path` detection
+- Form submissions properly use HTMX with HX-Redirect headers for seamless UX
+- Stats are computed in the dashboard route using SQL aggregations
+- Database is in sync with current schema (no migration issues)
+
+### Ready for Phase 6
+All Phase 5 deliverables validated and working. Web UI is functional, responsive, and ready for integration with translation and advanced features in Phase 6.
+
+## Session: sc-045 - Translation API endpoints (2026-01-13)
+
+### Summary
+Implemented REST API endpoints for the translation service, exposing translation functionality to external clients and the web UI.
+
+### Implementation Details
+
+1. **Translation Schemas** (`src/jefe/server/schemas/translation.py`)
+   - TranslateRequest: Content, source/target harness, config_kind, optional project_id
+   - TranslateResponse: Output text, unified diff, log_id
+   - TranslationLogResponse: Full translation log with metadata and timestamps
+   - ApplyTranslationRequest: File path and content to write
+
+2. **Translation Router** (`src/jefe/server/api/translation.py`)
+   - POST /api/translate - Translate content between harness formats
+     - Validates harness names via TranslationService
+     - Returns translated output with diff and log_id
+     - Error handling for TranslationError (400) and general errors (500)
+   - GET /api/translate/log - Get translation history
+     - Optional filters: project_id, translation_type, limit, offset
+     - Returns list of translation logs with full metadata
+   - POST /api/translate/apply - Apply translation to file
+     - Creates parent directories if needed
+     - Writes translated content to specified path
+     - Returns success message with file path
+
+3. **Router Registration** (`src/jefe/server/api/__init__.py`)
+   - Added translation_router import
+   - Registered with "translation" tag for OpenAPI grouping
+
+4. **Comprehensive Tests** (`tests/server/test_translation_api.py`)
+   - test_translate_content: Validates successful translation
+   - test_translate_invalid_harness: Error handling for invalid harness names
+   - test_get_translation_history: Retrieves logs after translation
+   - test_get_translation_history_with_filters: Tests limit/offset pagination
+   - test_apply_translation: Writes content to file
+   - test_apply_translation_creates_parent_directories: Validates directory creation
+   - test_openapi_documents_translation_routes: Verifies OpenAPI schema
+   - test_translation_requires_authentication: Validates API key requirement
+
+### Key Learnings
+
+1. **Type Safety with FastAPI**: Had to use `# type: ignore[arg-type]` for harness name parameters since the schema accepts `str` but the service expects `HarnessName` Literal. The service validates and normalizes harness names at runtime.
+
+2. **FastAPI Query Parameters**: Query parameters in FastAPI endpoints use `Query()` as default values, which triggers B008 from ruff. This is a safe pattern for FastAPI and was resolved by the linter recognizing the context.
+
+3. **Error Chaining**: Used `raise ... from e` pattern for proper exception chaining in except blocks (B904 requirement).
+
+4. **Test Patterns**: Followed existing test patterns with `client_with_key` fixture that sets up temporary database and API key for each test.
+
+5. **API Response Patterns**: Used helper function `_log_to_response()` to convert ORM models to Pydantic schemas, consistent with other API modules.
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe/server/api/translation.py src/jefe/server/schemas/translation.py` - No issues
+- ✓ Tests: `pytest tests/server/test_translation_api.py -v` - All 8 tests pass with 79% coverage
+- ✓ Linting: `ruff check` - All checks passed
+
+### Files Created/Modified
+- Created: `src/jefe/server/schemas/translation.py` (48 lines)
+- Created: `src/jefe/server/api/translation.py` (111 lines)
+- Modified: `src/jefe/server/api/__init__.py` (added translation router registration)
+- Created: `tests/server/test_translation_api.py` (214 lines, 8 test cases)
+
+### Acceptance Criteria Met
+✓ Can translate via API - POST /api/translate endpoint implemented
+✓ Can get translation history - GET /api/translate/log with filters
+✓ Can apply translation - POST /api/translate/apply writes to files
+✓ Tests pass - All 8 tests pass with comprehensive coverage
+
+### Next Steps
+The translation API is ready for integration with:
+- Web UI forms for interactive translation
+- CLI commands for command-line translation workflows
+- Bulk translation operations across projects
+- Translation history viewing and management
+
+
+## Task sc-053: Sync CLI Commands (2026-01-13)
+
+### Implementation Summary
+Created complete sync CLI command suite for manual sync control between local cache and server.
+
+### Key Implementation Details
+1. **Command Structure**:
+   - Used Typer callback with `invoke_without_command=True` for default sync command
+   - Registered four commands: status, push, pull, and default sync
+   - All commands require API key and check online status
+
+2. **Sync Protocol Integration**:
+   - Leveraged existing SyncProtocol class from src/jefe/cli/sync/protocol.py
+   - Protocol handles push/pull operations with conflict detection
+   - Last-write-wins conflict resolution based on timestamps
+
+3. **Rich Console Output**:
+   - Progress messages with colored status indicators
+   - Detailed conflict tables showing entity type, IDs, and resolution
+   - Pending changes table with counts and sample items
+   - Graceful offline mode handling
+
+4. **Testing Pattern**:
+   - Used AsyncMock for async functions (is_online, protocol methods)
+   - Mocked SyncProtocol and CacheManager for isolation
+   - Created mock project/skill classes for status tests
+   - 19 comprehensive tests with 93% code coverage
+
+5. **CLI Patterns Followed**:
+   - Async implementation with anyio.run() wrapper
+   - Helper functions: _require_api_key(), _render_*()
+   - Consistent error handling with typer.Exit(code=1)
+   - Online/offline detection before operations
+
+### Learnings
+- Typer's `callback(invoke_without_command=True)` pattern allows default command behavior
+- Must check `ctx.invoked_subcommand is None` to avoid double execution
+- AsyncMock required for mocking async functions in tests
+- Rich tables provide excellent UX for complex data display
+- SyncResult dataclass provides clean separation between protocol and CLI
+
+### Test Coverage
+- 19 tests covering all commands and edge cases
+- Status: online/offline, with/without changes
+- Push/Pull: success, failure, conflicts, no changes
+- Full sync: all combinations of push/pull results
+- API key validation for all commands
+
+### Files Modified
+- src/jefe/cli/commands/sync.py (new, 257 lines)
+- src/jefe/cli/app.py (import and register sync_app)
+- tests/cli/test_sync_commands.py (new, 494 lines)
+
+### Quality Metrics
+- Type checking: Clean (mypy)
+- Linting: Clean (ruff)
+- Tests: 19/19 passing
+- Code coverage: 93%

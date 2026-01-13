@@ -1,0 +1,15 @@
+{# Code viewer component for displaying syntax-highlighted code #}
+{# Expected variables: config.content, config.path #}
+<div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-2 bg-gray-100 border-b border-gray-200">
+        <span class="text-xs font-mono text-gray-600">{{ config.path }}</span>
+        {% if config.content_hash %}
+        <span class="text-xs text-gray-500" title="Content hash">
+            {{ config.content_hash[:8] }}
+        </span>
+        {% endif %}
+    </div>
+    <div class="overflow-x-auto">
+        <pre class="p-4 text-sm"><code class="language-{% if config.path.endswith('.json') %}json{% elif config.path.endswith('.md') %}markdown{% elif config.path.endswith('.yaml') or config.path.endswith('.yml') %}yaml{% elif config.path.endswith('.toml') %}toml{% else %}plaintext{% endif %}">{{ config.content }}</code></pre>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+# Bundles-Only Recipe
+# Example of a recipe that only applies bundles
+
+name: security-audit
+description: Security scanning and audit tools for code review
+
+# Applies to code analysis environments
+harnesses:
+  - claude-code
+  - vscode
+  - jetbrains
+
+# No individual skills, only bundles
+bundles:
+  - security-scanners
+  - vulnerability-checkers
+  - code-analysis
+  - dependency-audit

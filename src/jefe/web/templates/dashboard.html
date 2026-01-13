@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "components/card.html" import stat_card, activity_item %}
+
+{% block title %}Dashboard - Jefe{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Description -->
+    <div>
+        <p class="text-gray-600">
+            Overview of your projects, skills, and sources
+        </p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Projects Card -->
+        {{ stat_card(
+            title="Projects",
+            value=stats.projects_count,
+            description="Manage your repositories",
+            icon_svg='<svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
+            color="indigo",
+            href="/projects"
+        ) }}
+
+        <!-- Skills Card -->
+        {{ stat_card(
+            title="Skills Installed",
+            value=stats.total_skills,
+            description=stats.total_skills|string + " installed",
+            icon_svg='<svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            color="green",
+            href="/skills"
+        ) }}
+
+        <!-- Harnesses Card -->
+        {{ stat_card(
+            title="Harness Configs",
+            value=stats.harness_configs_count,
+            description="Configured harnesses",
+            icon_svg='<svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
+            color="blue",
+            href="/harnesses"
+        ) }}
+
+        <!-- Sources Card -->
+        {{ stat_card(
+            title="Skill Sources",
+            value=stats.sources_count,
+            description=stats.synced_sources_count|string + " synced",
+            icon_svg='<svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>',
+            color="purple",
+            href="/sources"
+        ) }}
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="mt-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+        <div class="bg-white shadow rounded-lg border border-gray-200">
+            <ul role="list" class="divide-y divide-gray-200">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                        {{ activity_item(
+                            title=activity.title,
+                            subtitle=activity.subtitle,
+                            time=activity.time,
+                            icon_svg=activity.icon,
+                            color=activity.color
+                        ) }}
+                    {% endfor %}
+                {% else %}
+                <li class="py-8">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">No recent activity</h3>
+                        <p class="mt-1 text-sm text-gray-500">Activity will appear here as you work with projects and skills.</p>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

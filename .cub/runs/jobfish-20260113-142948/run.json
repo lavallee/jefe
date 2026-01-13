@@ -1,0 +1,22 @@
+{
+  "run_id": "jobfish-20260113-142948",
+  "session_name": "jobfish",
+  "started_at": "2026-01-13T19:29:48Z",
+  "status": "in_progress",
+  "config": {
+    "guardrails": {
+      "max_task_iterations": 3,
+      "max_run_iterations": 50,
+      "iteration_warning_threshold": 0.8,
+      "secret_patterns": [
+        "api[_-]?key",
+        "password",
+        "token",
+        "secret",
+        "authorization",
+        "credentials"
+      ]
+    }
+  },
+  "tasks_completed": 18
+}

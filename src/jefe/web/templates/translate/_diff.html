@@ -1,0 +1,29 @@
+{# Diff viewer component for displaying unified diffs #}
+{# Expected variables: diff_lines (list of tuples: (type, line_number, content)) #}
+<div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 font-mono text-sm">
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for line_type, line_num, content in diff_lines %}
+                <tr class="{% if line_type == 'addition' %}diff-addition{% elif line_type == 'deletion' %}diff-deletion{% else %}diff-context{% endif %}">
+                    <td class="px-3 py-1 whitespace-nowrap text-xs text-gray-500 select-none w-12 text-right">
+                        {{ line_num if line_num else '' }}
+                    </td>
+                    <td class="px-3 py-1 whitespace-nowrap text-xs text-gray-500 select-none w-4">
+                        {% if line_type == 'addition' %}
+                        <span class="text-green-600">+</span>
+                        {% elif line_type == 'deletion' %}
+                        <span class="text-red-600">-</span>
+                        {% else %}
+                        <span class="text-gray-400"></span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-1 text-xs">
+                        <pre class="whitespace-pre-wrap break-all">{{ content }}</pre>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

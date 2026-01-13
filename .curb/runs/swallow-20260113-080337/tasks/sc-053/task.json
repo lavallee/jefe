@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-053",
+  "title": "Sync CLI commands",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T14:50:46Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T14:56:33Z",
+  "exit_code": 0
+}

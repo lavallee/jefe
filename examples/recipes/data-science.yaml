@@ -1,0 +1,52 @@
+# Data Science Recipe
+# Tools for data analysis, visualization, and machine learning
+
+name: data-science
+description: Comprehensive data science toolkit for Python with Jupyter support
+
+# Specific to data science environments
+harnesses:
+  - jupyter
+  - vscode-python
+  - pycharm
+
+# Data science skills
+skills:
+  # Data manipulation
+  - source: data-science
+    name: pandas-helpers
+    version: ^2.0.0
+
+  - source: data-science
+    name: numpy-snippets
+    version: ^1.24.0
+
+  # Visualization
+  - source: data-science
+    name: matplotlib-templates
+    version: ~3.7.0
+
+  - source: data-science
+    name: seaborn-charts
+    version: ^0.12.0
+
+  # Machine learning
+  - source: data-science
+    name: sklearn-templates
+    version: 1.3.2
+    pinned: true
+
+  - source: data-science
+    name: pytorch-helpers
+    version: >=2.0.0
+
+  # Notebook utilities
+  - source: jupyter
+    name: notebook-extensions
+    version: *
+
+# Bundles for common workflows
+bundles:
+  - numpy-toolkit
+  - visualization-suite
+  - ml-essentials

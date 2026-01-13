@@ -1,3 +1,5 @@
 """Web module - Web interface and frontend components."""
 
-__all__ = []
+from jefe.web.routes import web_router
+
+__all__ = ["web_router"]

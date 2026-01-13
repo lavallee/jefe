@@ -1,4 +1,4 @@
-# Ruff configuration for Station Chief
+# Ruff configuration for Jefe
 # This file defines linting and formatting rules for the project
 
 line-length = 100

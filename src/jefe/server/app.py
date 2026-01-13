@@ -36,6 +36,12 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         print("Use it in the X-API-Key header for all API requests.")
         print("=" * 70 + "\n")
 
+    from jefe.data.database import AsyncSessionLocal
+    from jefe.server.services.harness import HarnessService
+
+    async with AsyncSessionLocal() as session:
+        await HarnessService(session).seed_harnesses()
+
     yield
     # Shutdown
     await close_db()
@@ -49,7 +55,7 @@ def create_app() -> FastAPI:
         Configured FastAPI application ready to serve requests.
     """
     app = FastAPI(
-        title="Station Chief",
+        title="Jefe",
         description="A comprehensive Git repository management system with web and CLI interfaces",
         version=__version__,
         lifespan=lifespan,
@@ -96,7 +102,9 @@ def create_app() -> FastAPI:
 
     # Import and register routers
     from jefe.server.api import api_router
+    from jefe.web import web_router
 
     app.include_router(api_router)
+    app.include_router(web_router)
 
     return app

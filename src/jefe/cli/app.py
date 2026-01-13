@@ -4,7 +4,16 @@ import typer
 from rich.console import Console
 
 from jefe import __version__
+from jefe.cli.commands.bundles import bundles_app
 from jefe.cli.commands.config import config_app
+from jefe.cli.commands.harnesses import harnesses_app
+from jefe.cli.commands.knowledge import knowledge_app
+from jefe.cli.commands.projects import projects_app
+from jefe.cli.commands.skills import skills_app
+from jefe.cli.commands.sources import sources_app
+from jefe.cli.commands.status import status_app
+from jefe.cli.commands.sync import sync_app
+from jefe.cli.commands.translate import translate_app
 
 app = typer.Typer(
     name="jefe",
@@ -14,7 +23,16 @@ app = typer.Typer(
 console = Console()
 
 # Register subcommands
+app.add_typer(bundles_app, name="bundles")
 app.add_typer(config_app, name="config")
+app.add_typer(projects_app, name="projects")
+app.add_typer(harnesses_app, name="harnesses")
+app.add_typer(knowledge_app, name="knowledge")
+app.add_typer(sources_app, name="sources")
+app.add_typer(skills_app, name="skills")
+app.add_typer(status_app, name="status")
+app.add_typer(sync_app, name="sync")
+app.add_typer(translate_app, name="translate")
 
 
 def version_callback(value: bool) -> None:

@@ -52,5 +52,5 @@ def test_openapi_json_available(client: TestClient) -> None:
     data = response.json()
     assert "openapi" in data
     assert "info" in data
-    assert data["info"]["title"] == "Station Chief"
+    assert data["info"]["title"] == "Jefe"
     assert data["info"]["version"] == jefe.__version__

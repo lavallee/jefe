@@ -23,7 +23,7 @@ services:
       # Uncomment to share your SSH keys with the container (for git operations)
       # - ~/.ssh:/root/.ssh:ro
       # Uncomment to mount a local config directory
-      # - ~/.config/station-chief:/root/.config/station-chief
+      # - ~/.config/jefe:/root/.config/jefe
 
     # Example: Override the default command for debugging
     # Uncomment the line below and comment out the command in docker-compose.yml

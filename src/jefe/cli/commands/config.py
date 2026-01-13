@@ -28,7 +28,7 @@ def config_show() -> None:
         return
 
     # Create a table for nice output
-    table = Table(title="Station Chief Configuration", show_header=True, header_style="bold magenta")
+    table = Table(title="Jefe Configuration", show_header=True, header_style="bold magenta")
     table.add_column("Key", style="cyan", no_wrap=True)
     table.add_column("Value", style="green")
 

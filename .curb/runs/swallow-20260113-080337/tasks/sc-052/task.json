@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-052",
+  "title": "Sync protocol",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T14:39:38Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T14:50:39Z",
+  "exit_code": 0
+}

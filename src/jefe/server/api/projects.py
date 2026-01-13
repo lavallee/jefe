@@ -1,0 +1,295 @@
+"""Project API endpoints."""
+
+import json
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from jefe.data.database import get_session
+from jefe.data.models.harness import Harness
+from jefe.data.models.harness_config import HarnessConfig
+from jefe.data.models.manifestation import Manifestation, ManifestationType
+from jefe.data.models.project import Project
+from jefe.server.auth import APIKey
+from jefe.server.schemas.harness import HarnessConfigResponse
+from jefe.server.schemas.projects import (
+    ManifestationCreate,
+    ManifestationResponse,
+    ProjectCreate,
+    ProjectDetailResponse,
+    ProjectResponse,
+    ProjectUpdate,
+)
+from jefe.server.services.harness import HarnessService
+
+router = APIRouter()
+
+
+def _manifestation_to_response(manifestation: Manifestation) -> ManifestationResponse:
+    return ManifestationResponse(
+        id=manifestation.id,
+        type=manifestation.type,
+        path=manifestation.path,
+        machine_id=manifestation.machine_id,
+        last_seen=manifestation.last_seen,
+    )
+
+
+def _project_to_response(project: Project) -> ProjectResponse:
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        manifestations=[_manifestation_to_response(m) for m in project.manifestations],
+    )
+
+
+async def _configs_to_response(
+    session: AsyncSession, configs: list[HarnessConfig]
+) -> list[HarnessConfigResponse]:
+    harnesses = await HarnessService(session).list_harnesses()
+    harness_by_id = {harness.id: harness for harness in harnesses}
+
+    return [
+        HarnessConfigResponse(
+            harness=_get_harness_name(harness_by_id, config.harness_id),
+            scope=config.scope,
+            kind=config.kind,
+            path=str(config.path),
+            content=_parse_config_content(config.path, config.content),
+            content_hash=config.content_hash,
+            project_id=config.project_id,
+            project_name=config.project.name if config.project else None,
+        )
+        for config in configs
+    ]
+
+
+def _parse_config_content(path: str, content: str | None) -> dict[str, object] | str | None:
+    if content is None:
+        return None
+    if path.lower().endswith(".json"):
+        try:
+            data = json.loads(content)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            return content
+    return content
+
+
+def _get_harness_name(harness_by_id: dict[int, Harness], harness_id: int | None) -> str:
+    if harness_id is None:
+        return "unknown"
+    harness = harness_by_id.get(harness_id)
+    if harness is None:
+        return "unknown"
+    return harness.name
+
+
+@router.get("/api/projects", response_model=list[ProjectResponse])
+async def list_projects(
+    _api_key: APIKey, session: AsyncSession = Depends(get_session)
+) -> list[ProjectResponse]:
+    """List all registered projects."""
+    result = await session.execute(
+        select(Project).options(selectinload(Project.manifestations))
+    )
+    projects = list(result.scalars().all())
+    return [_project_to_response(project) for project in projects]
+
+
+@router.post("/api/projects", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
+async def create_project(
+    payload: ProjectCreate,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> ProjectResponse:
+    """Create a new project, optionally with a local manifestation."""
+    existing = await session.execute(select(Project).where(Project.name == payload.name))
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=400, detail="Project name already exists")
+
+    project_path: Path | None = None
+    if payload.path:
+        project_path = Path(payload.path).expanduser()
+        if not project_path.exists():
+            raise HTTPException(status_code=400, detail="Project path does not exist")
+
+    project = Project(name=payload.name, description=payload.description)
+    session.add(project)
+    await session.flush()
+
+    if project_path is not None:
+        manifestation = Manifestation(
+            project_id=project.id,
+            type=ManifestationType.LOCAL,
+            path=str(project_path.resolve()),
+        )
+        session.add(manifestation)
+
+    await session.commit()
+
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project.id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one()
+    return _project_to_response(project)
+
+
+@router.get("/api/projects/{project_id}", response_model=ProjectDetailResponse)
+async def get_project(
+    project_id: int,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> ProjectDetailResponse:
+    """Get a project with manifestations and discovered configs."""
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    configs = await HarnessService(session).list_configs(
+        project_id=project.id,
+        include_global=False,
+    )
+    return ProjectDetailResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        manifestations=[_manifestation_to_response(m) for m in project.manifestations],
+        configs=await _configs_to_response(session, configs),
+    )
+
+
+@router.patch("/api/projects/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: int,
+    payload: ProjectUpdate,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> ProjectResponse:
+    """Update a project's name or description."""
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    if "name" in updates:
+        existing = await session.execute(
+            select(Project).where(
+                Project.name == updates["name"],
+                Project.id != project_id,
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="Project name already exists")
+        project.name = updates["name"]
+
+    if "description" in updates:
+        project.description = updates["description"]
+
+    await session.commit()
+
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one()
+    return _project_to_response(project)
+
+
+@router.delete("/api/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: int,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Delete a project and its manifestations."""
+    result = await session.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    await session.delete(project)
+    await session.commit()
+
+
+@router.post(
+    "/api/projects/{project_id}/manifestations",
+    response_model=ManifestationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_manifestation(
+    project_id: int,
+    payload: ManifestationCreate,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> ManifestationResponse:
+    """Add a manifestation to a project."""
+    result = await session.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if payload.type == ManifestationType.LOCAL:
+        path = Path(payload.path).expanduser()
+        if not path.exists():
+            raise HTTPException(status_code=400, detail="Manifestation path does not exist")
+        path_value = str(path.resolve())
+    else:
+        path_value = payload.path
+
+    manifestation = Manifestation(
+        project_id=project.id,
+        type=payload.type,
+        path=path_value,
+        machine_id=payload.machine_id,
+    )
+    session.add(manifestation)
+    await session.commit()
+    await session.refresh(manifestation)
+    return _manifestation_to_response(manifestation)
+
+
+@router.delete(
+    "/api/projects/{project_id}/manifestations/{manifestation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_manifestation(
+    project_id: int,
+    manifestation_id: int,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Delete a manifestation from a project."""
+    result = await session.execute(
+        select(Manifestation).where(
+            Manifestation.id == manifestation_id,
+            Manifestation.project_id == project_id,
+        )
+    )
+    manifestation = result.scalar_one_or_none()
+    if manifestation is None:
+        raise HTTPException(status_code=404, detail="Manifestation not found")
+
+    await session.delete(manifestation)
+    await session.commit()

@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-042",
+  "title": "TranslationLog model",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T13:03:40Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T13:09:10Z",
+  "exit_code": 0
+}

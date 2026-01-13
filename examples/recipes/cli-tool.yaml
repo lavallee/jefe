@@ -1,0 +1,49 @@
+# CLI Tool Development Recipe
+# Essential tools for building command-line applications
+
+name: cli-tool
+description: Command-line tool development with Python, argument parsing, and testing
+
+# Applies to all harnesses (harnesses list is empty/omitted)
+
+# Skills for CLI development
+skills:
+  # Python CLI frameworks
+  - source: python
+    name: typer-templates
+    version: ^1.0.0
+
+  - source: python
+    name: click-helpers
+    version: ~8.1.0
+
+  # Terminal UI components
+  - source: python
+    name: rich-formatting
+    version: ^13.0.0
+    pinned: false
+
+  # Argument validation
+  - source: python
+    name: pydantic-validators
+    version: 2.5.2
+    pinned: true
+
+  # Configuration management
+  - source: python
+    name: config-loader
+    version: >=1.0.0
+
+  # Testing for CLI apps
+  - source: testing
+    name: pytest-runner
+    version: ^7.4.0
+
+  - source: testing
+    name: cli-test-helpers
+    version: *
+
+# Related bundles
+bundles:
+  - python-core
+  - cli-essentials

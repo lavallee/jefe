@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-061",
+  "title": "OpenRouter client",
+  "priority": "P2",
+  "status": "completed",
+  "started_at": "2026-01-13T20:36:25Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T20:39:49Z",
+  "exit_code": 0
+}

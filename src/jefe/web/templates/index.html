@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Jefe{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            Welcome to Jefe
+        </h1>
+        <p class="text-gray-600 mb-6">
+            A comprehensive Git repository management system with web and CLI interfaces.
+        </p>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Projects Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Projects
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Manage repositories
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <div class="text-sm">
+                        <a href="/projects" class="font-medium text-indigo-600 hover:text-indigo-500">
+                            View all projects
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Skills
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Browse & install
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <div class="text-sm">
+                        <a href="/skills" class="font-medium text-green-600 hover:text-green-500">
+                            Explore skills
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sources Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Sources
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Skill repositories
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <div class="text-sm">
+                        <a href="/sources" class="font-medium text-purple-600 hover:text-purple-500">
+                            Manage sources
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Stats</h2>
+            <div class="bg-gray-50 rounded-lg p-4" hx-get="/api/stats" hx-trigger="load" hx-swap="innerHTML">
+                <p class="text-gray-500">Loading statistics...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

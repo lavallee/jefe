@@ -1,0 +1,61 @@
+{% macro stat_card(title, value, description, icon_svg, color="indigo", href=None) %}
+<div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 {% if href %}hover:shadow-md transition-shadow cursor-pointer{% endif %}">
+    {% if href %}
+    <a href="{{ href }}" class="block">
+    {% endif %}
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-md bg-{{ color }}-100 flex items-center justify-center">
+                        {{ icon_svg|safe }}
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">
+                            {{ title }}
+                        </dt>
+                        <dd class="mt-1">
+                            <div class="text-3xl font-semibold text-gray-900">
+                                {{ value }}
+                            </div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            {% if description %}
+            <div class="mt-4">
+                <div class="text-sm text-gray-600">
+                    {{ description }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    {% if href %}
+    </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro activity_item(title, subtitle, time, icon_svg=None, color="gray") %}
+<li class="py-4">
+    <div class="flex space-x-3">
+        {% if icon_svg %}
+        <div class="flex-shrink-0">
+            <div class="h-8 w-8 rounded-full bg-{{ color }}-100 flex items-center justify-center">
+                {{ icon_svg|safe }}
+            </div>
+        </div>
+        {% endif %}
+        <div class="flex-1 space-y-1">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-medium text-gray-900">{{ title }}</h3>
+                <p class="text-sm text-gray-500">{{ time }}</p>
+            </div>
+            {% if subtitle %}
+            <p class="text-sm text-gray-500">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+    </div>
+</li>
+{% endmacro %}

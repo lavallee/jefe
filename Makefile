@@ -1,7 +1,7 @@
 .PHONY: help lint format typecheck test install dev clean docker-up docker-down docker-logs docker-build docker-restart
 
 help:
-	@echo "Station Chief - Development Commands"
+	@echo "Jefe - Development Commands"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make lint           - Run linting checks with ruff"

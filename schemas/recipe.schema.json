@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jefe.dev/schemas/recipe.schema.json",
+  "title": "Recipe",
+  "description": "Recipe file schema for Jefe skill and bundle management",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique recipe identifier in kebab-case format",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "examples": ["web-ui-tools", "python-dev", "data-science-kit"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the recipe's purpose"
+    },
+    "harnesses": {
+      "type": "array",
+      "description": "Target harness names (empty array means all harnesses)",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "skills": {
+      "type": "array",
+      "description": "Individual skills to install",
+      "items": {
+        "$ref": "#/$defs/SkillSpec"
+      },
+      "default": []
+    },
+    "bundles": {
+      "type": "array",
+      "description": "Bundle names to apply",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "default": []
+    }
+  },
+  "anyOf": [
+    {
+      "required": ["skills"],
+      "properties": {
+        "skills": {
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "required": ["bundles"],
+      "properties": {
+        "bundles": {
+          "minItems": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "SkillSpec": {
+      "type": "object",
+      "description": "Skill specification with source, name, and version constraint",
+      "required": ["source", "name"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source name where the skill is located"
+        },
+        "name": {
+          "type": "string",
+          "description": "Skill name within the source"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version constraint (e.g., 1.2.3, ^1.2.3, ~1.2.3, >=1.2.0, *)",
+          "pattern": "^(\\^|~|>=|<=|>|<|=)?(\\d+)\\.(\\d+)\\.(\\d+)(-[\\w.]+)?(\\+[\\w.]+)?$|^\\*$"
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Pin to exact version (prevents automatic updates)",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

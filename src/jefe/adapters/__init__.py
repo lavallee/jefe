@@ -1,3 +1,19 @@
 """Adapters module - Integration adapters and connectors."""
 
-__all__ = []
+from jefe.adapters.base import DiscoveredConfig, HarnessAdapter
+from jefe.adapters.registry import get_adapter, list_adapters, register_adapter
+
+
+def get_adapters() -> list[HarnessAdapter]:
+    """Return registered harness adapters."""
+    return list_adapters()
+
+
+__all__ = [
+    "DiscoveredConfig",
+    "HarnessAdapter",
+    "get_adapter",
+    "get_adapters",
+    "list_adapters",
+    "register_adapter",
+]
