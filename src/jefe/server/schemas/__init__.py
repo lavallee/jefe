@@ -8,6 +8,7 @@ from jefe.server.schemas.projects import (
     ProjectCreate,
     ProjectDetailResponse,
     ProjectResponse,
+    ProjectUpdate,
 )
 from jefe.server.schemas.status import StatusResponse
 
@@ -22,5 +23,6 @@ __all__ = [
     "ProjectCreate",
     "ProjectDetailResponse",
     "ProjectResponse",
+    "ProjectUpdate",
     "StatusResponse",
 ]

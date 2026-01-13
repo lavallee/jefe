@@ -34,6 +34,13 @@ class ProjectCreate(BaseModel):
     path: str | None = Field(None, description="Local path for the project")
 
 
+class ProjectUpdate(BaseModel):
+    """Project update payload."""
+
+    name: str | None = Field(None, description="Project name")
+    description: str | None = Field(None, description="Optional description")
+
+
 class ProjectResponse(BaseModel):
     """Project response payload."""
 

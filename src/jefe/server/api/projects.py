@@ -19,6 +19,7 @@ from jefe.server.schemas.projects import (
     ProjectCreate,
     ProjectDetailResponse,
     ProjectResponse,
+    ProjectUpdate,
 )
 from jefe.server.services.discovery import discover_for_project
 
@@ -135,6 +136,68 @@ async def get_project(
         manifestations=[_manifestation_to_response(m) for m in project.manifestations],
         configs=_configs_to_response(configs),
     )
+
+
+@router.patch("/api/projects/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: int,
+    payload: ProjectUpdate,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> ProjectResponse:
+    """Update a project's name or description."""
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    if "name" in updates:
+        existing = await session.execute(
+            select(Project).where(
+                Project.name == updates["name"],
+                Project.id != project_id,
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="Project name already exists")
+        project.name = updates["name"]
+
+    if "description" in updates:
+        project.description = updates["description"]
+
+    await session.commit()
+
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.manifestations))
+    )
+    project = result.scalar_one()
+    return _project_to_response(project)
+
+
+@router.delete("/api/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: int,
+    _api_key: APIKey,
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Delete a project and its manifestations."""
+    result = await session.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    await session.delete(project)
+    await session.commit()
 
 
 @router.post(
