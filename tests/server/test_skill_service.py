@@ -179,7 +179,7 @@ class TestSkillService:
         skill_service: SkillService,
         mock_skill: Skill,
         mock_harness: Harness,
-        skill_source_dir: Path,
+        skill_source_dir: Path,  # noqa: ARG002
         tmp_path: Path,
     ) -> None:
         """Test installing a skill globally."""
@@ -234,7 +234,7 @@ class TestSkillService:
         mock_skill: Skill,
         mock_harness: Harness,
         mock_project: Project,
-        skill_source_dir: Path,
+        skill_source_dir: Path,  # noqa: ARG002
         tmp_path: Path,
     ) -> None:
         """Test installing a skill to a project."""
@@ -410,7 +410,7 @@ class TestSkillService:
         skill_service: SkillService,
         mock_skill: Skill,
         mock_harness: Harness,
-        skill_source_dir: Path,
+        skill_source_dir: Path,  # noqa: ARG002
         tmp_path: Path,
     ) -> None:
         """Test that installing over an existing skill updates it."""

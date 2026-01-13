@@ -1,6 +1,6 @@
 """Tests for cache repositories."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -40,9 +40,11 @@ def mock_get_session(in_memory_engine):
     def _get_session():
         return SessionLocal()
 
-    with patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session):
-        with patch("jefe.cli.cache.repositories.init_cache_db"):
-            yield
+    with (
+        patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session),
+        patch("jefe.cli.cache.repositories.init_cache_db"),
+    ):
+        yield
 
 
 def test_project_repository_get_by_server_id(mock_get_session):
@@ -90,7 +92,7 @@ def test_repository_is_fresh_within_ttl(mock_get_session):
     project = CachedProject(
         name="fresh-project",
         server_id=1,
-        last_synced=datetime.now(timezone.utc),
+        last_synced=datetime.now(UTC),
         dirty=False,
     )
     repo.set(project)
@@ -102,7 +104,7 @@ def test_repository_is_fresh_within_ttl(mock_get_session):
 def test_repository_is_fresh_outside_ttl(mock_get_session):
     """Test is_fresh returns False for items outside TTL."""
     repo = ProjectRepository(ttl_seconds=300)
-    old_time = datetime.now(timezone.utc) - timedelta(seconds=400)
+    old_time = datetime.now(UTC) - timedelta(seconds=400)
     project = CachedProject(
         name="stale-project",
         server_id=1,

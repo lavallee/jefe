@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from jefe.data.database import get_engine
 from jefe.data.models.base import Base
 from jefe.data.models.project import Project
-from jefe.data.models.translation_log import TranslationLog, TranslationType
+from jefe.data.models.translation_log import TranslationType
 from jefe.data.repositories.project import ProjectRepository
 from jefe.data.repositories.translation_log import TranslationLogRepository
 

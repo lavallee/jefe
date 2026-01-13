@@ -7,17 +7,15 @@ import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jefe.data.database import configure_engine, get_session
+from jefe.data.database import configure_engine
 from jefe.data.models.knowledge import KnowledgeEntry
 from jefe.data.repositories.knowledge import KnowledgeRepository
 from jefe.server.services.knowledge import (
     ContentExtractor,
-    ExtractedContent,
     KnowledgeIngestionError,
     KnowledgeService,
     RateLimiter,
 )
-
 
 # --- ContentExtractor Tests ---
 

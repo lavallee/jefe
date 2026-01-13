@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jefe.data.database import get_engine
@@ -271,8 +272,8 @@ class TestInstalledSkillRepository:
             installed_path="/path/to/skill",
         )
 
-        # Try to install the same skill again - should raise an exception
-        with pytest.raises(Exception):
+        # Try to install the same skill again - should raise an exception due to unique constraint
+        with pytest.raises(IntegrityError):
             await repo.install(
                 skill_id=skill.id,
                 harness_id=harness.id,

@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from jefe.cli.cache.models import (
@@ -60,7 +61,7 @@ def test_cached_project_unique_name(in_memory_db: Session):
     project2 = CachedProject(name="unique-project", server_id=2)
     in_memory_db.add(project2)
 
-    with pytest.raises(Exception):  # SQLAlchemy will raise an IntegrityError
+    with pytest.raises(IntegrityError):
         in_memory_db.commit()
 
 

@@ -277,7 +277,7 @@ class TestSkillRepository:
         source, skill1 = await _create_source_with_skill(session, skill_name="skill-1")
 
         skill_repo = SkillRepository(session)
-        skill2 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source.id,
             name="skill-2",
             display_name="Skill 2",
@@ -303,7 +303,7 @@ class TestSkillRepository:
         )
 
         skill_repo = SkillRepository(session)
-        skill2 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source2.id,
             name="duplicate",
             display_name="Duplicate Skill",
@@ -332,12 +332,12 @@ class TestSkillRepository:
         source, skill1 = await _create_source_with_skill(session, skill_name="skill-1")
 
         skill_repo = SkillRepository(session)
-        skill2 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source.id,
             name="skill-2",
             author="Test Author",
         )
-        skill3 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source.id,
             name="skill-3",
             author="Other Author",
@@ -376,12 +376,12 @@ class TestSkillRepository:
         )
 
         skill_repo = SkillRepository(session)
-        skill2 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source2.id,
             name="skill-2",
             author="Author A",
         )
-        skill3 = await skill_repo.create(
+        await skill_repo.create(
             source_id=source2.id,
             name="skill-3",
             author="Author B",

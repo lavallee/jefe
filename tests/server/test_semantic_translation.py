@@ -4,19 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-import httpx
 import pytest
-from httpx import Response
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jefe.data.database import get_engine
 from jefe.data.models.base import Base
 from jefe.data.models.translation_log import TranslationType
 from jefe.server.llm.openrouter import (
-    OpenRouterAuthenticationError,
-    OpenRouterClient,
     OpenRouterError,
     OpenRouterRateLimitError,
 )
@@ -190,38 +186,25 @@ class TestTranslateSemantic:
         """Test successful semantic translation."""
         content = "# Original Content\n\nThis is the original."
 
-        mock_post = AsyncMock(
-            return_value=Response(
-                status_code=200,
-                json=mock_openrouter_response,
-                request=httpx.Request("POST", "https://openrouter.ai/api/v1"),
+        with patch(
+            "jefe.server.services.translation.semantic.OpenRouterClient"
+        ) as mock_cls:
+            mock_instance = AsyncMock()
+            mock_instance.complete = AsyncMock(
+                return_value=mock_openrouter_response["choices"][0]["message"][
+                    "content"
+                ]
             )
-        )
+            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+            mock_instance.__aexit__ = AsyncMock(return_value=None)
+            mock_cls.return_value = mock_instance
 
-        with patch.object(OpenRouterClient, "_client", create=True):
-            with patch.object(httpx.AsyncClient, "post", mock_post):
-                client = OpenRouterClient(api_key="test-key")
-                with patch.object(client, "_client") as mock_client:
-                    mock_client.post = mock_post
-                    with patch(
-                        "jefe.server.services.translation.semantic.OpenRouterClient"
-                    ) as mock_cls:
-                        mock_instance = AsyncMock()
-                        mock_instance.complete = AsyncMock(
-                            return_value=mock_openrouter_response["choices"][0]["message"][
-                                "content"
-                            ]
-                        )
-                        mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
-                        mock_instance.__aexit__ = AsyncMock(return_value=None)
-                        mock_cls.return_value = mock_instance
-
-                        result = await translate_semantic(
-                            content=content,
-                            source_harness="claude-code",
-                            target_harness="codex_cli",
-                            api_key="test-key",
-                        )
+            result = await translate_semantic(
+                content=content,
+                source_harness="claude-code",
+                target_harness="codex_cli",
+                api_key="test-key",
+            )
 
         assert result.output is not None
         assert "Overview" in result.output
@@ -229,7 +212,7 @@ class TestTranslateSemantic:
 
     @pytest.mark.asyncio
     async def test_translate_semantic_with_custom_model(
-        self, mock_openrouter_response: dict[str, Any]
+        self, mock_openrouter_response: dict[str, Any]  # noqa: ARG002
     ) -> None:
         """Test semantic translation with custom model."""
         content = "# Test"
@@ -385,7 +368,7 @@ class TestTranslationServiceSemantic:
                 model_used=custom_model,
             )
 
-            result = await translation_service.translate(
+            await translation_service.translate(
                 content=content,
                 source_harness="claude-code",
                 target_harness="codex_cli",
@@ -439,8 +422,8 @@ class TestTranslationServiceSemantic:
         assert len(logs) == 2
 
         # Find syntax and semantic logs
-        syntax_logs = [l for l in logs if l.translation_type == TranslationType.SYNTAX]
-        semantic_logs = [l for l in logs if l.translation_type == TranslationType.SEMANTIC]
+        syntax_logs = [log for log in logs if log.translation_type == TranslationType.SYNTAX]
+        semantic_logs = [log for log in logs if log.translation_type == TranslationType.SEMANTIC]
 
         assert len(syntax_logs) == 1
         assert len(semantic_logs) == 1

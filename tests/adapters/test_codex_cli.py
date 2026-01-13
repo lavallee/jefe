@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from jefe.adapters.codex_cli import CodexCliAdapter
 
 
@@ -199,11 +201,8 @@ def test_get_skills_path_project(tmp_path: Path) -> None:
 def test_get_skills_path_project_requires_path(tmp_path: Path) -> None:
     """Project scope requires project_path parameter."""
     adapter = CodexCliAdapter()
-    try:
+    with pytest.raises(ValueError, match="project_path required"):
         adapter.get_skills_path("project", project_path=None)
-        assert False, "Expected ValueError"
-    except ValueError as e:
-        assert "project_path required" in str(e)
 
 
 def test_install_skill_file(tmp_path: Path) -> None:

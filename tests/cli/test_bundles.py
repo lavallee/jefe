@@ -1,6 +1,6 @@
 """Tests for bundles CLI commands."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import httpx
 import pytest

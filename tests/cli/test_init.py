@@ -1,6 +1,5 @@
 """Tests for jefe projects init command."""
 
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 

@@ -1,7 +1,7 @@
 """Tests for sources CLI commands."""
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import httpx
 from typer.testing import CliRunner

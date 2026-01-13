@@ -35,9 +35,11 @@ def mock_get_session(in_memory_engine):
     def _get_session():
         return SessionLocal()
 
-    with patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session):
-        with patch("jefe.cli.cache.repositories.init_cache_db"):
-            yield
+    with (
+        patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session),
+        patch("jefe.cli.cache.repositories.init_cache_db"),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -223,11 +225,13 @@ class TestSyncProtocol:
             }
         )
 
-        with patch("jefe.cli.sync.protocol.is_online", return_value=True):
-            with patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient:
-                MockSyncClient.return_value.__aenter__.return_value = mock_client
-                MockSyncClient.return_value.__aexit__.return_value = None
-                result = await sync_protocol.push()
+        with (
+            patch("jefe.cli.sync.protocol.is_online", return_value=True),
+            patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient,
+        ):
+            MockSyncClient.return_value.__aenter__.return_value = mock_client
+            MockSyncClient.return_value.__aexit__.return_value = None
+            result = await sync_protocol.push()
 
         assert result.success is True
         assert result.pushed == 1
@@ -264,11 +268,13 @@ class TestSyncProtocol:
         mock_client = AsyncMock()
         mock_client.pull = AsyncMock(return_value=mock_response)
 
-        with patch("jefe.cli.sync.protocol.is_online", return_value=True):
-            with patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient:
-                MockSyncClient.return_value.__aenter__.return_value = mock_client
-                MockSyncClient.return_value.__aexit__.return_value = None
-                result = await sync_protocol.pull()
+        with (
+            patch("jefe.cli.sync.protocol.is_online", return_value=True),
+            patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient,
+        ):
+            MockSyncClient.return_value.__aenter__.return_value = mock_client
+            MockSyncClient.return_value.__aexit__.return_value = None
+            result = await sync_protocol.pull()
 
         assert result.success is True
         assert result.pulled == 1
@@ -301,11 +307,13 @@ class TestSyncProtocol:
             }
         )
 
-        with patch("jefe.cli.sync.protocol.is_online", return_value=True):
-            with patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient:
-                MockSyncClient.return_value.__aenter__.return_value = mock_client
-                MockSyncClient.return_value.__aexit__.return_value = None
-                result = await sync_protocol.sync()
+        with (
+            patch("jefe.cli.sync.protocol.is_online", return_value=True),
+            patch("jefe.cli.sync.protocol.SyncClient") as MockSyncClient,
+        ):
+            MockSyncClient.return_value.__aenter__.return_value = mock_client
+            MockSyncClient.return_value.__aexit__.return_value = None
+            result = await sync_protocol.sync()
 
         assert result.success is True
 

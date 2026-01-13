@@ -1,5 +1,7 @@
 """Tests for syntax translation between harness config formats."""
 
+from typing import ClassVar
+
 import pytest
 
 from jefe.server.services.translation import TranslationError, translate_syntax
@@ -382,7 +384,7 @@ class TestTranslationError:
 class TestAllHarnessPairs:
     """Test all harness pair combinations work."""
 
-    HARNESSES = ["claude-code", "codex_cli", "opencode", "gemini_cli"]
+    HARNESSES: ClassVar[list[str]] = ["claude-code", "codex_cli", "opencode", "gemini_cli"]
 
     @pytest.mark.parametrize("source", HARNESSES)
     @pytest.mark.parametrize("target", HARNESSES)

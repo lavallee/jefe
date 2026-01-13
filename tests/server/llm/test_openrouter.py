@@ -67,11 +67,11 @@ class TestOpenRouterClient:
 
     def test_init_without_api_key(self) -> None:
         """Test initialization fails without API key."""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(
-                OpenRouterAuthenticationError, match="API key is required"
-            ):
-                OpenRouterClient()
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(OpenRouterAuthenticationError, match="API key is required"),
+        ):
+            OpenRouterClient()
 
     def test_init_with_custom_model(self, mock_api_key: str) -> None:
         """Test initialization with custom model."""
@@ -175,9 +175,11 @@ class TestErrorHandling:
 
         mock_post = AsyncMock(side_effect=httpx.HTTPStatusError("", request=httpx.Request("POST", ""), response=mock_response))
 
-        with patch.object(client._client, "post", mock_post):
-            with pytest.raises(OpenRouterRateLimitError, match="Rate limit exceeded"):
-                await client.complete("Test prompt")
+        with (
+            patch.object(client._client, "post", mock_post),
+            pytest.raises(OpenRouterRateLimitError, match="Rate limit exceeded"),
+        ):
+            await client.complete("Test prompt")
 
     @pytest.mark.asyncio
     async def test_authentication_error(self, client: OpenRouterClient) -> None:
@@ -190,11 +192,11 @@ class TestErrorHandling:
 
         mock_post = AsyncMock(side_effect=httpx.HTTPStatusError("", request=httpx.Request("POST", ""), response=mock_response))
 
-        with patch.object(client._client, "post", mock_post):
-            with pytest.raises(
-                OpenRouterAuthenticationError, match="Authentication failed"
-            ):
-                await client.complete("Test prompt")
+        with (
+            patch.object(client._client, "post", mock_post),
+            pytest.raises(OpenRouterAuthenticationError, match="Authentication failed"),
+        ):
+            await client.complete("Test prompt")
 
     @pytest.mark.asyncio
     async def test_general_http_error(self, client: OpenRouterClient) -> None:
@@ -207,9 +209,11 @@ class TestErrorHandling:
 
         mock_post = AsyncMock(side_effect=httpx.HTTPStatusError("", request=httpx.Request("POST", ""), response=mock_response))
 
-        with patch.object(client._client, "post", mock_post):
-            with pytest.raises(OpenRouterError, match="API error"):
-                await client.complete("Test prompt")
+        with (
+            patch.object(client._client, "post", mock_post),
+            pytest.raises(OpenRouterError, match="API error"),
+        ):
+            await client.complete("Test prompt")
 
     @pytest.mark.asyncio
     async def test_request_error(self, client: OpenRouterClient) -> None:
@@ -218,9 +222,11 @@ class TestErrorHandling:
             side_effect=httpx.RequestError("Connection failed", request=httpx.Request("POST", ""))
         )
 
-        with patch.object(client._client, "post", mock_post):
-            with pytest.raises(OpenRouterError, match="Request failed"):
-                await client.complete("Test prompt")
+        with (
+            patch.object(client._client, "post", mock_post),
+            pytest.raises(OpenRouterError, match="Request failed"),
+        ):
+            await client.complete("Test prompt")
 
 
 class TestContextManager:

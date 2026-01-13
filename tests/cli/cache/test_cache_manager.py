@@ -1,6 +1,6 @@
 """Tests for cache manager."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -27,9 +27,11 @@ def mock_get_session(in_memory_engine):
     def _get_session():
         return SessionLocal()
 
-    with patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session):
-        with patch("jefe.cli.cache.repositories.init_cache_db"):
-            yield
+    with (
+        patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session),
+        patch("jefe.cli.cache.repositories.init_cache_db"),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -98,7 +100,7 @@ def test_cache_manager_is_project_fresh(manager):
     assert manager.is_project_fresh(project) is True
 
     # Artificially age the project
-    project.last_synced = datetime.now(timezone.utc) - timedelta(seconds=400)
+    project.last_synced = datetime.now(UTC) - timedelta(seconds=400)
     manager.projects.set(project)
 
     assert manager.is_project_fresh(project) is False

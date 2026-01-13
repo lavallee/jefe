@@ -31,9 +31,11 @@ def mock_get_session(in_memory_engine):
     def _get_session():
         return SessionLocal()
 
-    with patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session):
-        with patch("jefe.cli.cache.repositories.init_cache_db"):
-            yield
+    with (
+        patch("jefe.cli.cache.repositories.get_cache_session", side_effect=_get_session),
+        patch("jefe.cli.cache.repositories.init_cache_db"),
+    ):
+        yield
 
 
 @pytest.fixture
