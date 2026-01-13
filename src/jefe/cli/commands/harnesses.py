@@ -14,7 +14,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
 
-from jefe.cli.client import create_client, get_api_key, get_server_url
+from jefe.cli.cache.manager import CacheManager
+from jefe.cli.client import create_client, get_api_key, get_server_url, is_online
 
 harnesses_app = typer.Typer(name="harnesses", help="View and discover harness configs")
 console = Console()
@@ -166,13 +167,59 @@ def list_harnesses() -> None:
 
 
 async def _list_harnesses_async() -> None:
+    # Check if we're online
+    online = await is_online()
+
+    if not online:
+        # Offline mode - show cached harnesses
+        console.print("[yellow]⚠ Offline mode - showing cached data[/yellow]")
+        cache = CacheManager()
+        try:
+            cached_harnesses = cache.get_all_harnesses()
+            if not cached_harnesses:
+                console.print("No cached harnesses available.")
+                return
+
+            # Convert to dict format for rendering
+            harnesses: list[dict[str, object]] = [
+                {
+                    "name": h.name,
+                    "display_name": h.display_name,
+                    "version": h.version,
+                }
+                for h in cached_harnesses
+            ]
+            _render_harnesses(harnesses)
+        finally:
+            cache.close()
+        return
+
     async with create_client() as client:
         response = await _request(client, "GET", "/api/harnesses")
 
     if response.status_code != 200:
         _fail_request("list harnesses", response)
 
-    _render_harnesses(response.json())
+    harnesses = response.json()
+
+    # Cache the harnesses (harnesses is list[dict[str, Any]])
+    cache = CacheManager()
+    try:
+        from typing import cast
+        for harness_data in harnesses:
+            harness_dict = cast(dict[str, object], harness_data)
+            harness_id_val = harness_dict.get("id")
+            server_id = int(str(harness_id_val)) if harness_id_val is not None else 0
+            cache.cache_harness(
+                server_id=server_id,
+                name=str(harness_dict["name"]),
+                display_name=str(harness_dict.get("display_name")) if harness_dict.get("display_name") else None,
+                version=str(harness_dict.get("version")) if harness_dict.get("version") else None,
+            )
+    finally:
+        cache.close()
+
+    _render_harnesses(harnesses)
 
 
 @harnesses_app.command("discover")

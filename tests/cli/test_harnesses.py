@@ -16,6 +16,11 @@ def _make_client(handler) -> httpx.AsyncClient:
     return httpx.AsyncClient(base_url="http://test", transport=transport)
 
 
+async def mock_is_online_true() -> bool:
+    """Mock is_online that returns True."""
+    return True
+
+
 def test_harnesses_list_command() -> None:
     """List harnesses via CLI."""
     def handler(request: httpx.Request) -> httpx.Response:
@@ -24,6 +29,7 @@ def test_harnesses_list_command() -> None:
             200,
             json=[
                 {
+                    "id": 1,
                     "name": "claude-code",
                     "display_name": "Claude Code",
                     "version": "1.2.3",
@@ -35,6 +41,7 @@ def test_harnesses_list_command() -> None:
     with (
         patch("jefe.cli.commands.harnesses.get_api_key", return_value="key"),
         patch("jefe.cli.commands.harnesses.create_client", return_value=client),
+        patch("jefe.cli.commands.harnesses.is_online", mock_is_online_true),
     ):
         result = runner.invoke(app, ["harnesses", "list"])
 

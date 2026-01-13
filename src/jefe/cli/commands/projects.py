@@ -216,6 +216,26 @@ async def _add_project_async(
         console.print(f"[red]Path does not exist:[/red] {path}")
         raise typer.Exit(code=1)
 
+    # Check if we're online
+    online = await is_online()
+
+    if not online:
+        # Offline mode - create locally for later sync
+        console.print("[yellow]⚠ Offline mode - creating project locally[/yellow]")
+        cache = CacheManager()
+        try:
+            cached_project = cache.create_project_offline(name, description)
+            console.print(f"Created project '{name}' locally (cache_id={cached_project.id}).")
+            console.print("[dim]Note: Run 'jefe sync push' when online to sync to server.[/dim]")
+            if remote:
+                console.print("[yellow]⚠ Remote URL saved but not registered (requires server)[/yellow]")
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            raise typer.Exit(code=1) from e
+        finally:
+            cache.close()
+        return
+
     payload: dict[str, object] = {"name": name, "description": description}
     if path is not None:
         payload["path"] = str(path)
@@ -237,6 +257,17 @@ async def _add_project_async(
             )
             if manifest_response.status_code != 201:
                 _fail_request("add remote", manifest_response)
+
+    # Cache the created project
+    cache = CacheManager()
+    try:
+        cache.cache_project(
+            server_id=project["id"],
+            name=project["name"],
+            description=project.get("description"),
+        )
+    finally:
+        cache.close()
 
     console.print(f"Created project {project['name']} (id={project['id']}).")
     if remote:

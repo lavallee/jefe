@@ -206,6 +206,59 @@ class CachedHarnessConfig(CacheBase, SyncMixin):
     project_id: Mapped[int | None] = mapped_column(nullable=True)
 
 
+class CachedSource(CacheBase, SyncMixin):
+    """Cached skill source entry."""
+
+    __tablename__ = "cached_sources"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Mirror SkillSource model fields
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="git")
+    url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sync_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+
+class CachedHarness(CacheBase, SyncMixin):
+    """Cached harness entry."""
+
+    __tablename__ = "cached_harnesses"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Mirror Harness model fields
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+
 class ConflictResolutionType(str, Enum):
     """How a conflict was or should be resolved."""
 

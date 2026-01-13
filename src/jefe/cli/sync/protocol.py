@@ -124,11 +124,16 @@ class SyncClient:
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
 
-    async def pull(self, last_synced: datetime | None = None) -> dict[str, Any]:
+    async def pull(
+        self,
+        last_synced: datetime | None = None,
+        entity_types: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Pull changes from the server.
 
         Args:
             last_synced: Timestamp to get changes since (None = all)
+            entity_types: Optional list of entity types to pull (None = all)
 
         Returns:
             The pull response from the server
@@ -142,6 +147,8 @@ class SyncClient:
         data: dict[str, Any] = {}
         if last_synced is not None:
             data["last_synced"] = last_synced.isoformat()
+        if entity_types:
+            data["entity_types"] = entity_types
 
         response = await self._client.post("/api/sync/pull", json=data)
         response.raise_for_status()
@@ -255,8 +262,12 @@ class SyncProtocol:
             error_message=pull_result.error_message,
         )
 
-    async def push(self) -> SyncResult:
+    async def push(self, entity_types: list[str] | None = None) -> SyncResult:
         """Push local dirty items to the server.
+
+        Args:
+            entity_types: Optional list of entity types to push. If None, pushes all.
+                Valid types: projects, skills, installed_skills, harness_configs
 
         Returns:
             SyncResult with success status and counts
@@ -268,6 +279,17 @@ class SyncProtocol:
         dirty_projects, dirty_skills, dirty_installed, dirty_configs = (
             self._cache.get_all_dirty_items()
         )
+
+        # Filter by entity types if specified
+        if entity_types:
+            if "projects" not in entity_types:
+                dirty_projects = []
+            if "skills" not in entity_types:
+                dirty_skills = []
+            if "installed_skills" not in entity_types:
+                dirty_installed = []
+            if "harness_configs" not in entity_types:
+                dirty_configs = []
 
         # Build push request
         push_data = self._build_push_request(
@@ -314,8 +336,12 @@ class SyncProtocol:
         except httpx.HTTPError as e:
             return SyncResult(success=False, error_message=str(e))
 
-    async def pull(self) -> SyncResult:
+    async def pull(self, entity_types: list[str] | None = None) -> SyncResult:
         """Pull changes from the server.
+
+        Args:
+            entity_types: Optional list of entity types to pull. If None, pulls all.
+                Valid types: projects, skills, installed_skills, harness_configs
 
         Returns:
             SyncResult with success status and counts
@@ -325,10 +351,10 @@ class SyncProtocol:
 
         try:
             async with SyncClient() as client:
-                response = await client.pull(self._last_synced)
+                response = await client.pull(self._last_synced, entity_types)
 
-            # Process pulled items
-            conflicts = self._process_pull_response(response)
+            # Process pulled items (filtered by entity_types if specified)
+            conflicts = self._process_pull_response(response, entity_types)
             self._conflicts.extend(conflicts)
 
             # Update last synced timestamp
@@ -498,13 +524,16 @@ class SyncProtocol:
                 config.server_id = config_mappings[local_id]
                 self._cache.harness_configs.set(config)
 
-    def _process_pull_response(self, response: dict[str, Any]) -> list[SyncConflict]:
+    def _process_pull_response(  # noqa: C901
+        self, response: dict[str, Any], entity_types: list[str] | None = None
+    ) -> list[SyncConflict]:
         """Process the pull response and update local cache.
 
         Implements last-write-wins conflict resolution.
 
         Args:
             response: The pull response from the server
+            entity_types: Optional list of entity types to process. If None, processes all.
 
         Returns:
             List of sync conflicts
@@ -512,28 +541,32 @@ class SyncProtocol:
         conflicts: list[SyncConflict] = []
 
         # Process projects
-        for project_data in response.get("projects", []):
-            conflict = self._update_project_from_server(project_data)
-            if conflict:
-                conflicts.append(conflict)
+        if entity_types is None or "projects" in entity_types:
+            for project_data in response.get("projects", []):
+                conflict = self._update_project_from_server(project_data)
+                if conflict:
+                    conflicts.append(conflict)
 
         # Process skills
-        for skill_data in response.get("skills", []):
-            conflict = self._update_skill_from_server(skill_data)
-            if conflict:
-                conflicts.append(conflict)
+        if entity_types is None or "skills" in entity_types:
+            for skill_data in response.get("skills", []):
+                conflict = self._update_skill_from_server(skill_data)
+                if conflict:
+                    conflicts.append(conflict)
 
         # Process installed skills
-        for installed_data in response.get("installed_skills", []):
-            conflict = self._update_installed_skill_from_server(installed_data)
-            if conflict:
-                conflicts.append(conflict)
+        if entity_types is None or "installed_skills" in entity_types:
+            for installed_data in response.get("installed_skills", []):
+                conflict = self._update_installed_skill_from_server(installed_data)
+                if conflict:
+                    conflicts.append(conflict)
 
         # Process harness configs
-        for config_data in response.get("harness_configs", []):
-            conflict = self._update_harness_config_from_server(config_data)
-            if conflict:
-                conflicts.append(conflict)
+        if entity_types is None or "harness_configs" in entity_types:
+            for config_data in response.get("harness_configs", []):
+                conflict = self._update_harness_config_from_server(config_data)
+                if conflict:
+                    conflicts.append(conflict)
 
         return conflicts
 

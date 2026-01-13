@@ -6,19 +6,23 @@ from datetime import UTC, datetime
 from typing import Any
 
 from jefe.cli.cache.models import (
+    CachedHarness,
     CachedHarnessConfig,
     CachedInstalledSkill,
     CachedProject,
     CachedSkill,
+    CachedSource,
     ConfigScope,
     InstallScope,
 )
 from jefe.cli.cache.repositories import (
     ConflictRepository,
     HarnessConfigRepository,
+    HarnessRepository,
     InstalledSkillRepository,
     ProjectRepository,
     SkillRepository,
+    SourceRepository,
 )
 
 
@@ -39,6 +43,8 @@ class CacheManager:
         self.skills = SkillRepository(ttl_seconds)
         self.installed_skills = InstalledSkillRepository(ttl_seconds)
         self.harness_configs = HarnessConfigRepository(ttl_seconds)
+        self.sources = SourceRepository(ttl_seconds)
+        self.harnesses = HarnessRepository(ttl_seconds)
         self.conflicts = ConflictRepository()
         self.ttl_seconds = ttl_seconds
 
@@ -48,6 +54,8 @@ class CacheManager:
         self.skills.close()
         self.installed_skills.close()
         self.harness_configs.close()
+        self.sources.close()
+        self.harnesses.close()
         self.conflicts.close()
 
     # Project operations
@@ -383,6 +391,182 @@ class CacheManager:
         """
         self.harness_configs.mark_dirty(config)
 
+    # Source operations
+    def cache_source(
+        self,
+        server_id: int,
+        name: str,
+        source_type: str,
+        url: str,
+        description: str | None = None,
+        sync_status: str | None = None,
+        last_synced_at: datetime | None = None,
+    ) -> CachedSource:
+        """Cache a source from server response.
+
+        Args:
+            server_id: The server ID of the source
+            name: Source name
+            source_type: Source type (e.g., 'git')
+            url: Source URL
+            description: Optional description
+            sync_status: Sync status (e.g., 'synced', 'error')
+            last_synced_at: Last sync timestamp
+
+        Returns:
+            The cached source
+        """
+        existing = self.sources.get_by_server_id(server_id)
+        if existing:
+            existing.name = name
+            existing.source_type = source_type
+            existing.url = url
+            existing.description = description
+            existing.sync_status = sync_status
+            existing.last_synced_at = last_synced_at
+            existing.last_synced = datetime.now(UTC)
+            existing.dirty = False
+            self.sources.set(existing)
+            return existing
+
+        source = CachedSource(
+            server_id=server_id,
+            name=name,
+            source_type=source_type,
+            url=url,
+            description=description,
+            sync_status=sync_status,
+            last_synced_at=last_synced_at,
+            last_synced=datetime.now(UTC),
+            dirty=False,
+        )
+        self.sources.set(source)
+        return source
+
+    def get_source(self, name: str) -> CachedSource | None:
+        """Get a cached source by name."""
+        return self.sources.get_by_name(name)
+
+    def get_all_sources(self) -> list[CachedSource]:
+        """Get all cached sources."""
+        return self.sources.get_all()
+
+    def mark_source_dirty(self, source: CachedSource) -> None:
+        """Mark a source as locally modified."""
+        self.sources.mark_dirty(source)
+
+    # Harness operations
+    def cache_harness(
+        self,
+        server_id: int,
+        name: str,
+        display_name: str | None = None,
+        version: str | None = None,
+    ) -> CachedHarness:
+        """Cache a harness from server response.
+
+        Args:
+            server_id: The server ID of the harness
+            name: Harness name
+            display_name: Optional display name
+            version: Optional version
+
+        Returns:
+            The cached harness
+        """
+        existing = self.harnesses.get_by_server_id(server_id)
+        if existing:
+            existing.name = name
+            existing.display_name = display_name
+            existing.version = version
+            existing.last_synced = datetime.now(UTC)
+            existing.dirty = False
+            self.harnesses.set(existing)
+            return existing
+
+        harness = CachedHarness(
+            server_id=server_id,
+            name=name,
+            display_name=display_name,
+            version=version,
+            last_synced=datetime.now(UTC),
+            dirty=False,
+        )
+        self.harnesses.set(harness)
+        return harness
+
+    def get_harness(self, name: str) -> CachedHarness | None:
+        """Get a cached harness by name."""
+        return self.harnesses.get_by_name(name)
+
+    def get_all_harnesses(self) -> list[CachedHarness]:
+        """Get all cached harnesses."""
+        return self.harnesses.get_all()
+
+    def mark_harness_dirty(self, harness: CachedHarness) -> None:
+        """Mark a harness as locally modified."""
+        self.harnesses.mark_dirty(harness)
+
+    # Offline-first create operations (no server_id)
+    def create_project_offline(
+        self, name: str, description: str | None = None
+    ) -> CachedProject:
+        """Create a project locally for later sync.
+
+        Args:
+            name: Project name
+            description: Optional project description
+
+        Returns:
+            The created cached project (marked dirty)
+        """
+        # Check if already exists
+        existing = self.projects.get_by_name(name)
+        if existing:
+            raise ValueError(f"Project '{name}' already exists in cache")
+
+        project = CachedProject(
+            name=name,
+            description=description,
+            server_id=None,  # Will be assigned during sync
+            dirty=True,  # Mark as needing sync
+        )
+        self.projects.set(project)
+        return project
+
+    def create_source_offline(
+        self,
+        name: str,
+        url: str,
+        source_type: str = "git",
+        description: str | None = None,
+    ) -> CachedSource:
+        """Create a source locally for later sync.
+
+        Args:
+            name: Source name
+            url: Source URL
+            source_type: Source type (default: 'git')
+            description: Optional description
+
+        Returns:
+            The created cached source (marked dirty)
+        """
+        existing = self.sources.get_by_name(name)
+        if existing:
+            raise ValueError(f"Source '{name}' already exists in cache")
+
+        source = CachedSource(
+            name=name,
+            source_type=source_type,
+            url=url,
+            description=description,
+            server_id=None,
+            dirty=True,
+        )
+        self.sources.set(source)
+        return source
+
     # Sync operations
     def get_all_dirty_items(
         self,
@@ -404,9 +588,35 @@ class CacheManager:
             self.harness_configs.get_dirty(),
         )
 
+    def get_all_dirty_items_extended(
+        self,
+    ) -> tuple[
+        list[CachedProject],
+        list[CachedSkill],
+        list[CachedInstalledSkill],
+        list[CachedHarnessConfig],
+        list[CachedSource],
+        list[CachedHarness],
+    ]:
+        """Get all dirty items including sources and harnesses.
+
+        Returns:
+            Tuple of all dirty items by entity type
+        """
+        return (
+            self.projects.get_dirty(),
+            self.skills.get_dirty(),
+            self.installed_skills.get_dirty(),
+            self.harness_configs.get_dirty(),
+            self.sources.get_dirty(),
+            self.harnesses.get_dirty(),
+        )
+
     def clear_all_dirty(self) -> None:
         """Clear all dirty flags and update last_synced timestamps."""
         self.projects.clear_all_dirty()
         self.skills.clear_all_dirty()
         self.installed_skills.clear_all_dirty()
         self.harness_configs.clear_all_dirty()
+        self.sources.clear_all_dirty()
+        self.harnesses.clear_all_dirty()

@@ -72,6 +72,7 @@ def test_projects_add_command(tmp_path: Path) -> None:
     with (
         patch("jefe.cli.commands.projects.get_api_key", return_value="key"),
         patch("jefe.cli.commands.projects.create_client", return_value=client),
+        patch("jefe.cli.commands.projects.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(
             app,
@@ -111,6 +112,7 @@ def test_projects_add_with_remote_command(tmp_path: Path) -> None:
     with (
         patch("jefe.cli.commands.projects.get_api_key", return_value="key"),
         patch("jefe.cli.commands.projects.create_client", return_value=client),
+        patch("jefe.cli.commands.projects.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(
             app,

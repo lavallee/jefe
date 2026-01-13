@@ -11,10 +11,12 @@ from sqlalchemy.orm import Session
 from jefe.cli.cache.database import get_cache_session, init_cache_db
 from jefe.cli.cache.models import (
     CachedConflict,
+    CachedHarness,
     CachedHarnessConfig,
     CachedInstalledSkill,
     CachedProject,
     CachedSkill,
+    CachedSource,
     ConfigScope,
     ConflictResolutionType,
     InstallScope,
@@ -322,6 +324,61 @@ class HarnessConfigRepository(CacheRepository[CachedHarnessConfig]):
         """
         session = self._get_session()
         stmt = select(CachedHarnessConfig).where(CachedHarnessConfig.path == path)
+        return session.execute(stmt).scalar_one_or_none()
+
+
+class SourceRepository(CacheRepository[CachedSource]):
+    """Repository for cached skill sources."""
+
+    def __init__(self, ttl_seconds: int = DEFAULT_TTL):
+        """Initialize the source repository."""
+        super().__init__(CachedSource, ttl_seconds)
+
+    def get_by_name(self, name: str) -> CachedSource | None:
+        """Get a cached source by name.
+
+        Args:
+            name: The source name to look up
+
+        Returns:
+            The cached source or None if not found
+        """
+        session = self._get_session()
+        stmt = select(CachedSource).where(CachedSource.name == name)
+        return session.execute(stmt).scalar_one_or_none()
+
+    def get_by_url(self, url: str) -> CachedSource | None:
+        """Get a cached source by URL.
+
+        Args:
+            url: The source URL to look up
+
+        Returns:
+            The cached source or None if not found
+        """
+        session = self._get_session()
+        stmt = select(CachedSource).where(CachedSource.url == url)
+        return session.execute(stmt).scalar_one_or_none()
+
+
+class HarnessRepository(CacheRepository[CachedHarness]):
+    """Repository for cached harnesses."""
+
+    def __init__(self, ttl_seconds: int = DEFAULT_TTL):
+        """Initialize the harness repository."""
+        super().__init__(CachedHarness, ttl_seconds)
+
+    def get_by_name(self, name: str) -> CachedHarness | None:
+        """Get a cached harness by name.
+
+        Args:
+            name: The harness name to look up
+
+        Returns:
+            The cached harness or None if not found
+        """
+        session = self._get_session()
+        stmt = select(CachedHarness).where(CachedHarness.name == name)
         return session.execute(stmt).scalar_one_or_none()
 
 

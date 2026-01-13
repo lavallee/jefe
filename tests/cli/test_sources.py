@@ -1,7 +1,7 @@
 """Tests for sources CLI commands."""
 
 import json
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 from typer.testing import CliRunner
@@ -14,6 +14,11 @@ runner = CliRunner()
 def _make_client(handler) -> httpx.AsyncClient:
     transport = httpx.MockTransport(handler)
     return httpx.AsyncClient(base_url="http://test", transport=transport)
+
+
+async def mock_is_online_true() -> bool:
+    """Mock is_online that returns True."""
+    return True
 
 
 def test_sources_list_command() -> None:
@@ -40,6 +45,7 @@ def test_sources_list_command() -> None:
     with (
         patch("jefe.cli.commands.sources.get_api_key", return_value="key"),
         patch("jefe.cli.commands.sources.create_client", return_value=client),
+        patch("jefe.cli.commands.sources.is_online", mock_is_online_true),
     ):
         result = runner.invoke(app, ["sources", "list"])
 
@@ -59,6 +65,7 @@ def test_sources_list_empty() -> None:
     with (
         patch("jefe.cli.commands.sources.get_api_key", return_value="key"),
         patch("jefe.cli.commands.sources.create_client", return_value=client),
+        patch("jefe.cli.commands.sources.is_online", mock_is_online_true),
     ):
         result = runner.invoke(app, ["sources", "list"])
 
@@ -92,6 +99,7 @@ def test_sources_add_command() -> None:
     with (
         patch("jefe.cli.commands.sources.get_api_key", return_value="key"),
         patch("jefe.cli.commands.sources.create_client", return_value=client),
+        patch("jefe.cli.commands.sources.is_online", mock_is_online_true),
     ):
         result = runner.invoke(
             app,
@@ -100,7 +108,7 @@ def test_sources_add_command() -> None:
 
     assert result.exit_code == 0
     assert "Created source anthropic-skills" in result.stdout
-    assert "sc sources sync" in result.stdout
+    assert "jefe sources sync" in result.stdout
 
 
 def test_sources_add_with_description() -> None:
@@ -128,6 +136,7 @@ def test_sources_add_with_description() -> None:
     with (
         patch("jefe.cli.commands.sources.get_api_key", return_value="key"),
         patch("jefe.cli.commands.sources.create_client", return_value=client),
+        patch("jefe.cli.commands.sources.is_online", mock_is_online_true),
     ):
         result = runner.invoke(
             app,

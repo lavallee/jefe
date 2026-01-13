@@ -1,5 +1,6 @@
 """Skill sources CLI commands."""
 
+from datetime import datetime
 from typing import Any
 
 import anyio
@@ -8,7 +9,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from jefe.cli.client import create_client, get_api_key, get_server_url
+from jefe.cli.cache.manager import CacheManager
+from jefe.cli.client import create_client, get_api_key, get_server_url, is_online
 
 sources_app = typer.Typer(name="sources", help="Manage skill sources")
 console = Console()
@@ -103,6 +105,36 @@ def list_sources() -> None:
 
 
 async def _list_sources_async() -> None:
+    # Check if we're online
+    online = await is_online()
+
+    if not online:
+        # Offline mode - show cached sources
+        console.print("[yellow]⚠ Offline mode - showing cached data[/yellow]")
+        cache = CacheManager()
+        try:
+            cached_sources = cache.get_all_sources()
+            if not cached_sources:
+                console.print("No cached sources available.")
+                return
+
+            # Convert to dict format for rendering
+            sources = [
+                {
+                    "id": s.server_id or f"local-{s.id}",
+                    "name": s.name,
+                    "source_type": s.source_type,
+                    "url": s.url,
+                    "sync_status": s.sync_status,
+                    "last_synced_at": s.last_synced_at,
+                }
+                for s in cached_sources
+            ]
+            _render_sources_table(sources)
+        finally:
+            cache.close()
+        return
+
     async with create_client() as client:
         response = await _request(client, "GET", "/api/sources")
 
@@ -113,6 +145,25 @@ async def _list_sources_async() -> None:
     if not sources:
         console.print("No sources configured.")
         return
+
+    # Cache the sources
+    cache = CacheManager()
+    try:
+        for source in sources:
+            last_synced_at = None
+            if source.get("last_synced_at"):
+                last_synced_at = datetime.fromisoformat(source["last_synced_at"].replace("Z", "+00:00"))
+            cache.cache_source(
+                server_id=source["id"],
+                name=source["name"],
+                source_type=source["source_type"],
+                url=source["url"],
+                description=source.get("description"),
+                sync_status=source.get("sync_status"),
+                last_synced_at=last_synced_at,
+            )
+    finally:
+        cache.close()
 
     _render_sources_table(sources)
 
@@ -133,6 +184,25 @@ async def _add_source_async(
     url: str,
     description: str | None,
 ) -> None:
+    # Check if we're online
+    online = await is_online()
+
+    if not online:
+        # Offline mode - create locally for later sync
+        console.print("[yellow]⚠ Offline mode - creating source locally[/yellow]")
+        cache = CacheManager()
+        try:
+            cached_source = cache.create_source_offline(name, url, "git", description)
+            console.print(f"Created source '{name}' locally (cache_id={cached_source.id}).")
+            console.print("[dim]Note: Run 'jefe sync push' when online to sync to server.[/dim]")
+            console.print("[yellow]⚠ Source sync requires server connection.[/yellow]")
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            raise typer.Exit(code=1) from e
+        finally:
+            cache.close()
+        return
+
     payload: dict[str, object] = {
         "name": name,
         "source_type": "git",
@@ -147,8 +217,23 @@ async def _add_source_async(
         _fail_request("create source", response)
 
     source = response.json()
+
+    # Cache the created source
+    cache = CacheManager()
+    try:
+        cache.cache_source(
+            server_id=source["id"],
+            name=source["name"],
+            source_type=source["source_type"],
+            url=source["url"],
+            description=source.get("description"),
+            sync_status=source.get("sync_status"),
+        )
+    finally:
+        cache.close()
+
     console.print(f"[green]Created source {source['name']} (id={source['id']}).[/green]")
-    console.print(f"Run [cyan]sc sources sync {source['name']}[/cyan] to fetch skills.")
+    console.print(f"Run [cyan]jefe sources sync {source['name']}[/cyan] to fetch skills.")
 
 
 @sources_app.command("sync")

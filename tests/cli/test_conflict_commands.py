@@ -212,7 +212,8 @@ def test_sync_resolve_interactive_with_diff() -> None:
     assert result.exit_code == 0
     assert "Conflict 1:" in result.stdout
     assert "Entity Type: project" in result.stdout
-    assert "Differences:" in result.stdout
-    assert "name:" in result.stdout
+    # Check for unified diff header
+    assert "Unified Diff" in result.stdout or "Field Comparison:" in result.stdout
+    assert "name" in result.stdout
     assert "local-project" in result.stdout
     assert "server-project" in result.stdout

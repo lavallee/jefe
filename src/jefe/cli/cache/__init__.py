@@ -7,19 +7,23 @@ from jefe.cli.cache.database import (
     init_cache_db,
 )
 from jefe.cli.cache.models import (
+    CachedHarness,
     CachedHarnessConfig,
     CachedInstalledSkill,
     CachedProject,
     CachedSkill,
+    CachedSource,
     ConfigScope,
     InstallScope,
 )
 
 __all__ = [
+    "CachedHarness",
     "CachedHarnessConfig",
     "CachedInstalledSkill",
     "CachedProject",
     "CachedSkill",
+    "CachedSource",
     "ConfigScope",
     "InstallScope",
     "get_cache_db_path",
