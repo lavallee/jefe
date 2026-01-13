@@ -3424,3 +3424,60 @@ Successfully validated Phase 7 offline & sync functionality:
 
 Phase 7 is complete and ready for Phase 8 progression.
 
+
+## Session 13 (2026-01-13)
+
+### Epic: sc-E06 - Translation
+
+Verified that the Translation epic was already fully implemented from previous sessions.
+
+#### Findings
+
+The Translation epic was complete with:
+
+1. **Syntax Translation Rules** (`src/jefe/server/services/translation/mappings.py`)
+   - `HARNESS_ALIASES`: Maps harness name variants (claude-code, claude_code, claudecode, etc.)
+   - `INSTRUCTION_SECTION_MAPPINGS`: Bidirectional markdown section heading mappings for all 4 harnesses
+   - `SETTINGS_KEY_MAPPINGS`: Settings key translations between JSON/TOML formats
+
+2. **Translation Service** (`src/jefe/server/services/translation/service.py`)
+   - `translate()`: Main translation with validation, diff generation, and audit logging
+   - `get_history()`: Retrieve translation logs with optional filtering
+   - `apply_translation()`: Write translated content to files
+
+3. **Core Translation Logic** (`src/jefe/server/services/translation/syntax.py`)
+   - `translate_syntax()`: Dispatcher for instructions vs settings
+   - `_translate_instructions()`: Markdown section parsing and heading mapping
+   - `_translate_settings()`: JSON ↔ TOML format conversion
+   - Translation notes automatically added to output
+
+4. **API Endpoints** (`src/jefe/server/api/translation.py`)
+   - `POST /api/translate`: Translate content between harnesses
+   - `GET /api/translate/log`: Get translation history with pagination
+   - `POST /api/translate/apply`: Apply translated content to file
+
+5. **CLI Commands** (`src/jefe/cli/commands/translate.py`)
+   - `jefe translate file <FILE>`: Translate with dry-run, diff preview, confirmation
+   - `jefe translate history`: Show recent translations in table format
+
+6. **Web UI** (`src/jefe/web/templates/translate/index.html`, `routes.py`)
+   - Translation form with harness/config-kind selection
+   - Diff viewer with syntax-highlighted output
+   - History tab for viewing past translations
+   - Apply-to-file functionality
+
+#### Test Coverage
+
+104 translation-specific tests across:
+- `tests/server/test_syntax_translation.py`
+- `tests/server/test_translation_service.py`
+- `tests/server/test_translation_api.py`
+- `tests/cli/test_translate.py`
+- `tests/data/test_translation_log_repo.py`
+
+#### Feedback Loop Results
+
+All checks pass:
+- mypy: 88 source files with no issues
+- pytest: 496 tests passed
+- ruff: All checks passed
