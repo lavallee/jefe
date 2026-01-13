@@ -3591,3 +3591,47 @@ Successfully created a complete bundle model and API system for managing skill b
 - Bundle model includes: name (unique), display_name, description, skill_refs (JSON)
 - BundleApplyResult includes: success (int), failed (int), errors (list[str])
 - Apply operation is fault-tolerant, continues on individual skill failures
+
+## Session 2026-01-13 (sc-057): Bundles CLI commands
+
+### Task Completed
+Successfully implemented CLI commands for managing bundles:
+- Created `src/jefe/cli/commands/bundles.py` with three commands (list, show, apply)
+- Registered commands in main CLI app
+- Created comprehensive test suite with 13 tests
+- All feedback loops passed (typecheck, lint, tests)
+
+### Key Implementation Details
+1. **List Command**: Displays bundles in a table with skill counts
+2. **Show Command**: Shows detailed bundle info including all skill references
+3. **Apply Command**: Installs all skills from a bundle to a harness with:
+   - Support for both global and project scopes
+   - Progress indication during application
+   - Detailed error reporting with success/failure counts
+   - Proper validation (can't specify both --global and --project)
+
+### CLI Patterns Followed
+- Used `anyio.run()` for async operations
+- Separated async implementations into `_async` functions
+- Used Rich library for progress display (SpinnerColumn, TextColumn)
+- Proper error handling with `_require_api_key()`, `_request()`, `_fail_request()`
+- Resolver functions for bundle, harness, and project names/IDs
+
+### Test Coverage
+Created `tests/cli/test_bundles.py` with tests for:
+- Listing bundles (empty and with results)
+- Showing bundle details (by name and ID)
+- Applying bundles (global and project scopes)
+- Error cases (not found, missing scope, conflicting scopes)
+- API key validation
+
+### Files Modified
+- `src/jefe/cli/commands/bundles.py` (new, 285 lines)
+- `src/jefe/cli/app.py` (added bundles_app registration)
+- `tests/cli/test_bundles.py` (new, 391 lines)
+
+### Learnings
+- Bundle apply command requires harness_id, scope, and optional project_id
+- The API returns success_count, failed_count, and errors list from bundle application
+- Progress indication during async operations can be done with Rich Progress context manager
+- All CLI commands follow consistent pattern: sync entry point → anyio.run() → async implementation
