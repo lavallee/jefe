@@ -140,19 +140,23 @@ def test_apply_translation(
     client_with_key: tuple[TestClient, str], tmp_path: Path
 ) -> None:
     """Translation can be applied to a file."""
+    from unittest.mock import patch
+
     client, api_key = client_with_key
 
     target_file = tmp_path / "output.md"
     content = "# Translated Content\nThis is the translated output."
 
-    response = client.post(
-        "/api/translate/apply",
-        json={
-            "file_path": str(target_file),
-            "content": content,
-        },
-        headers={"X-API-Key": api_key},
-    )
+    # Patch cwd to be tmp_path so path validation passes
+    with patch("pathlib.Path.cwd", return_value=tmp_path):
+        response = client.post(
+            "/api/translate/apply",
+            json={
+                "file_path": str(target_file),
+                "content": content,
+            },
+            headers={"X-API-Key": api_key},
+        )
 
     assert response.status_code == 200
     assert "message" in response.json()
@@ -164,19 +168,23 @@ def test_apply_translation_creates_parent_directories(
     client_with_key: tuple[TestClient, str], tmp_path: Path
 ) -> None:
     """Apply translation creates parent directories if they don't exist."""
+    from unittest.mock import patch
+
     client, api_key = client_with_key
 
     target_file = tmp_path / "nested" / "dirs" / "output.md"
     content = "# Test"
 
-    response = client.post(
-        "/api/translate/apply",
-        json={
-            "file_path": str(target_file),
-            "content": content,
-        },
-        headers={"X-API-Key": api_key},
-    )
+    # Patch cwd to be tmp_path so path validation passes
+    with patch("pathlib.Path.cwd", return_value=tmp_path):
+        response = client.post(
+            "/api/translate/apply",
+            json={
+                "file_path": str(target_file),
+                "content": content,
+            },
+            headers={"X-API-Key": api_key},
+        )
 
     assert response.status_code == 200
     assert target_file.exists()

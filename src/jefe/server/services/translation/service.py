@@ -200,6 +200,7 @@ class TranslationService:
         self,
         file_path: Path,
         content: str,
+        allowed_base_dir: Path | None = None,
     ) -> None:
         """
         Write translated content to a file.
@@ -207,16 +208,65 @@ class TranslationService:
         Args:
             file_path: Path to write the translated content
             content: The translated content to write
+            allowed_base_dir: Optional base directory to restrict writes to.
+                              If None, uses current working directory.
 
         Raises:
-            TranslationError: If file writing fails
+            TranslationError: If file writing fails or path is outside allowed directory
         """
         try:
+            # Resolve the path to handle symlinks and relative paths
+            resolved_path = file_path.expanduser().resolve()
+
+            # Determine allowed base directory
+            base_dir = (allowed_base_dir or Path.cwd()).resolve()
+
+            # Validate that the resolved path is within allowed directory
+            if not resolved_path.is_relative_to(base_dir):
+                raise TranslationError(
+                    f"Path '{resolved_path}' is outside allowed directory '{base_dir}'"
+                )
+
+            # Block writes to sensitive system directories
+            # Be specific to avoid blocking user temp directories (/var/folders on macOS)
+            sensitive_prefixes = [
+                "/etc", "/root", "/usr", "/bin", "/sbin",
+                "/private/etc",  # macOS equivalent of /etc
+                "/var/log", "/var/run", "/var/lib", "/var/spool",
+                "/private/var/log", "/private/var/run",
+            ]
+            path_str = str(resolved_path)
+            for prefix in sensitive_prefixes:
+                if path_str.startswith(prefix):
+                    raise TranslationError(
+                        f"Writing to system directory '{prefix}' is not allowed"
+                    )
+
+            # Block writes to home directory sensitive locations
+            home = Path.home()
+            sensitive_home_paths = [
+                home / ".ssh",
+                home / ".gnupg",
+                home / ".config",
+                home / ".bashrc",
+                home / ".zshrc",
+                home / ".profile",
+            ]
+            for sensitive_path in sensitive_home_paths:
+                if resolved_path == sensitive_path or resolved_path.is_relative_to(
+                    sensitive_path
+                ):
+                    raise TranslationError(
+                        f"Writing to sensitive path '{sensitive_path}' is not allowed"
+                    )
+
             # Ensure parent directory exists
-            file_path.parent.mkdir(parents=True, exist_ok=True)
+            resolved_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write content to file
-            file_path.write_text(content, encoding="utf-8")
+            resolved_path.write_text(content, encoding="utf-8")
+        except TranslationError:
+            raise
         except Exception as e:
             raise TranslationError(f"Failed to write file {file_path}: {e}") from e
 

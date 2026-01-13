@@ -24,6 +24,7 @@ from jefe.data.repositories.manifestation import ManifestationRepository
 from jefe.data.repositories.project import ProjectRepository
 from jefe.data.repositories.skill import SkillRepository
 from jefe.data.repositories.skill_source import SkillSourceRepository
+from jefe.server.auth import APIKey
 from jefe.server.services.discovery import discover_all, discover_for_harness
 from jefe.server.services.skill import SkillInstallError, SkillService
 from jefe.server.services.translation.service import TranslationService
@@ -177,6 +178,7 @@ async def projects_new(request: Request) -> HTMLResponse:
 
 @web_router.post("/projects")
 async def projects_create(
+    _api_key: APIKey,
     name: str = Form(...),
     description: str | None = Form(None),
     path: str | None = Form(None),
@@ -293,6 +295,7 @@ async def projects_edit(
 @web_router.put("/projects/{project_id}")
 async def projects_update(
     project_id: int,
+    _api_key: APIKey,
     name: str = Form(...),
     description: str | None = Form(None),
     session: AsyncSession = Depends(get_session),
@@ -326,6 +329,7 @@ async def projects_update(
 @web_router.delete("/projects/{project_id}")
 async def projects_delete(
     project_id: int,
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
     """
@@ -384,6 +388,7 @@ async def manifestations_new(
 @web_router.post("/projects/{project_id}/manifestations")
 async def manifestations_create(
     project_id: int,
+    _api_key: APIKey,
     type: str = Form(...),
     path: str = Form(...),
     machine_id: str | None = Form(None),
@@ -432,6 +437,7 @@ async def manifestations_create(
 async def manifestations_delete(
     project_id: int,
     manifestation_id: int,
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> HTMLResponse:
     """
@@ -628,6 +634,7 @@ async def skills_install_form(
 
 @web_router.post("/skills/install")
 async def skills_install(
+    _api_key: APIKey,
     skill_id: int = Form(...),
     harness_id: int = Form(...),
     scope: str = Form(...),
@@ -761,6 +768,7 @@ async def harnesses_detail(
 
 @web_router.post("/harnesses/discover")
 async def harnesses_discover_all(
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
     """
@@ -785,6 +793,7 @@ async def harnesses_discover_all(
 @web_router.post("/harnesses/{harness_name}/discover")
 async def harnesses_discover_single(
     harness_name: str,
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
     """
@@ -944,6 +953,7 @@ async def translate_page(
 @web_router.post("/translate/api")
 async def translate_api(
     payload: TranslateWebRequest,
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> JSONResponse:
     """
@@ -988,6 +998,7 @@ async def translate_api(
 @web_router.post("/translate/apply")
 async def apply_translation(
     payload: ApplyWebRequest,
+    _api_key: APIKey,
     session: AsyncSession = Depends(get_session),
 ) -> JSONResponse:
     """

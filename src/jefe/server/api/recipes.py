@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jefe.data.database import get_session
+from jefe.server.auth import APIKey
 from jefe.server.schemas.recipe import RecipeResponse
 from jefe.server.services.recipe import (
     RecipeParseError,
@@ -28,6 +29,7 @@ def get_recipe_service(session: AsyncSession = Depends(get_session)) -> RecipeSe
 @router.post("/parse", response_model=RecipeResponse, status_code=status.HTTP_200_OK)
 async def parse_recipe(
     payload: dict[str, str],
+    _api_key: APIKey,
     service: RecipeService = Depends(get_recipe_service),
 ) -> dict[str, Any]:
     """
@@ -76,6 +78,7 @@ async def parse_recipe(
 @router.post("/resolve", status_code=status.HTTP_200_OK)
 async def resolve_recipe(
     payload: dict[str, str],
+    _api_key: APIKey,
     service: RecipeService = Depends(get_recipe_service),
 ) -> dict[str, Any]:
     """

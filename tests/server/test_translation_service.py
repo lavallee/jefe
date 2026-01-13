@@ -282,6 +282,7 @@ Run the tests.
         await translation_service.apply_translation(
             file_path=output_file,
             content=content,
+            allowed_base_dir=tmp_path,
         )
 
         # Verify file was created
@@ -301,6 +302,7 @@ Run the tests.
         await translation_service.apply_translation(
             file_path=output_file,
             content=content,
+            allowed_base_dir=tmp_path,
         )
 
         # Verify directory was created
@@ -318,6 +320,7 @@ Run the tests.
         await translation_service.apply_translation(
             file_path=output_file,
             content=new_content,
+            allowed_base_dir=tmp_path,
         )
 
         written_content = output_file.read_text(encoding="utf-8")
@@ -336,12 +339,67 @@ Run the tests.
             await translation_service.apply_translation(
                 file_path=output_file,
                 content="# Test",
+                allowed_base_dir=tmp_path,
             )
 
         assert "Failed to write file" in str(exc_info.value)
 
         # Clean up
         output_file.parent.chmod(0o755)
+
+    async def test_apply_translation_blocks_path_traversal(
+        self, translation_service: TranslationService, tmp_path: Path
+    ) -> None:
+        """Test that path traversal attacks are blocked."""
+        # Try to write outside the allowed base directory using path traversal
+        malicious_file = tmp_path / ".." / "malicious.md"
+
+        with pytest.raises(TranslationError) as exc_info:
+            await translation_service.apply_translation(
+                file_path=malicious_file,
+                content="# Malicious",
+                allowed_base_dir=tmp_path,
+            )
+
+        assert "outside allowed directory" in str(exc_info.value)
+
+    async def test_apply_translation_blocks_absolute_path_outside_base(
+        self, translation_service: TranslationService, tmp_path: Path
+    ) -> None:
+        """Test that absolute paths outside allowed directory are blocked."""
+        malicious_file = Path("/etc/malicious.md")
+
+        with pytest.raises(TranslationError) as exc_info:
+            await translation_service.apply_translation(
+                file_path=malicious_file,
+                content="# Malicious",
+                allowed_base_dir=tmp_path,
+            )
+
+        # Could be blocked by either "outside allowed" or "system directory" check
+        error_msg = str(exc_info.value)
+        assert "outside allowed directory" in error_msg or "system directory" in error_msg
+
+    async def test_apply_translation_blocks_sensitive_paths(
+        self, translation_service: TranslationService
+    ) -> None:
+        """Test that writes to sensitive system directories are blocked."""
+        # Even if we allow the parent directory, system paths should be blocked
+        import os
+        import platform
+
+        # Only test if not running as root (where /etc might be writable)
+        if os.geteuid() != 0:
+            # Use the appropriate /etc path for the platform
+            etc_path = "/private/etc" if platform.system() == "Darwin" else "/etc"
+            with pytest.raises(TranslationError) as exc_info:
+                await translation_service.apply_translation(
+                    file_path=Path(f"{etc_path}/passwd.backup"),
+                    content="# Malicious",
+                    allowed_base_dir=Path("/"),  # Allow root but block /etc
+                )
+
+            assert "system directory" in str(exc_info.value)
 
     async def test_diff_generation(
         self, translation_service: TranslationService
