@@ -2,14 +2,24 @@
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
+import pytest
 from typer.testing import CliRunner
 
 from jefe.cli import app
+from jefe.cli.client import clear_online_cache
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def reset_online_cache():
+    """Reset the online cache before each test."""
+    clear_online_cache()
+    yield
+    clear_online_cache()
 
 
 def _make_client(handler) -> httpx.AsyncClient:
@@ -30,6 +40,7 @@ def test_projects_list_command() -> None:
     with (
         patch("jefe.cli.commands.projects.get_api_key", return_value="key"),
         patch("jefe.cli.commands.projects.create_client", return_value=client),
+        patch("jefe.cli.commands.projects.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(app, ["projects", "list"])
 
@@ -139,6 +150,7 @@ def test_projects_show_command() -> None:
     with (
         patch("jefe.cli.commands.projects.get_api_key", return_value="key"),
         patch("jefe.cli.commands.projects.create_client", return_value=client),
+        patch("jefe.cli.commands.projects.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(app, ["projects", "show", "demo"])
 
@@ -167,16 +179,16 @@ def test_projects_remove_command() -> None:
 
 
 def test_projects_connection_error() -> None:
-    """Show connection errors clearly."""
-    def handler(request: httpx.Request) -> httpx.Response:
-        raise httpx.ConnectError("boom", request=request)
-
-    client = _make_client(handler)
+    """Show offline mode when server is unreachable."""
+    # When is_online returns False, we get offline mode with cached data
     with (
         patch("jefe.cli.commands.projects.get_api_key", return_value="key"),
-        patch("jefe.cli.commands.projects.create_client", return_value=client),
+        patch("jefe.cli.commands.projects.is_online", new_callable=AsyncMock, return_value=False),
+        patch("jefe.cli.commands.projects.CacheManager") as mock_cache_cls,
     ):
+        mock_cache = mock_cache_cls.return_value
+        mock_cache.get_all_projects.return_value = []
         result = runner.invoke(app, ["projects", "list"])
 
-    assert result.exit_code == 1
-    assert "Unable to reach server" in result.stdout
+    assert result.exit_code == 0
+    assert "Offline mode" in result.stdout

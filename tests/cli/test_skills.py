@@ -1,14 +1,24 @@
 """Tests for skills CLI commands."""
 
 import json
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
+import pytest
 from typer.testing import CliRunner
 
 from jefe.cli import app
+from jefe.cli.client import clear_online_cache
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def reset_online_cache():
+    """Reset the online cache before each test."""
+    clear_online_cache()
+    yield
+    clear_online_cache()
 
 
 def _make_client(handler) -> httpx.AsyncClient:
@@ -105,6 +115,8 @@ def test_skills_list_command() -> None:
     with (
         patch("jefe.cli.commands.skills.get_api_key", return_value="key"),
         patch("jefe.cli.commands.skills.create_client", return_value=client),
+        patch("jefe.cli.commands.skills.is_online", new_callable=AsyncMock, return_value=True),
+        patch("jefe.cli.commands.skills.CacheManager"),
     ):
         result = runner.invoke(app, ["skills", "list"])
 
@@ -123,6 +135,7 @@ def test_skills_list_empty() -> None:
     with (
         patch("jefe.cli.commands.skills.get_api_key", return_value="key"),
         patch("jefe.cli.commands.skills.create_client", return_value=client),
+        patch("jefe.cli.commands.skills.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(app, ["skills", "list"])
 
@@ -159,6 +172,7 @@ def test_skills_list_installed() -> None:
     with (
         patch("jefe.cli.commands.skills.get_api_key", return_value="key"),
         patch("jefe.cli.commands.skills.create_client", return_value=client),
+        patch("jefe.cli.commands.skills.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(app, ["skills", "list", "--installed"])
 
@@ -213,6 +227,7 @@ def test_skills_list_installed_with_project_filter() -> None:
     with (
         patch("jefe.cli.commands.skills.get_api_key", return_value="key"),
         patch("jefe.cli.commands.skills.create_client", return_value=client),
+        patch("jefe.cli.commands.skills.is_online", new_callable=AsyncMock, return_value=True),
     ):
         result = runner.invoke(app, ["skills", "list", "--installed", "--project", "my-project"])
 
