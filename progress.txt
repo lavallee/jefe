@@ -763,3 +763,11 @@ Updated default SQLite database filename to `jefe.db` for app and Alembic defaul
 - Updated uv.lock to reflect the renamed `jefe` package and remove the `typer` extras entry.
 - Feedback loops: `mypy src/jefe`, `pytest`, `ruff check src/jefe`.
 - Note: `uv lock` could not run in the sandbox due to restricted network access and an empty UV cache.
+
+## Session 18 (2026-01-12)
+
+### Task: sc-E01 - Foundation
+
+- Added pytest bootstrap to include `src/` on sys.path so tests can import `jefe` without editable installs.
+- Feedback loops: `mypy src/jefe`, `ruff check src/jefe tests`, `pytest`.
+- `bd close sc-E01` succeeded; noted beads warnings about read-only export hash updates.
