@@ -3,13 +3,12 @@
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jefe.data.database import get_engine
 from jefe.data.models.base import Base
 from jefe.data.models.harness import Harness
-from jefe.data.models.installed_skill import InstalledSkill, InstallScope
+from jefe.data.models.installed_skill import InstallScope
 from jefe.data.models.project import Project
 from jefe.data.models.skill import Skill
 from jefe.data.models.skill_source import SkillSource, SourceType, SyncStatus

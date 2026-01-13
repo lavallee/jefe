@@ -174,12 +174,12 @@ class TestSkillService:
             assert skill is not None
             assert skill.id == 1
 
-    async def test_install_skill_global(  # noqa: ARG002
+    async def test_install_skill_global(
         self,
         skill_service: SkillService,
         mock_skill: Skill,
         mock_harness: Harness,
-        skill_source_dir: Path,  # noqa: ARG001
+        skill_source_dir: Path,
         tmp_path: Path,
     ) -> None:
         """Test installing a skill globally."""
@@ -228,13 +228,13 @@ class TestSkillService:
         finally:
             os.chdir(original_cwd)
 
-    async def test_install_skill_project(  # noqa: ARG002
+    async def test_install_skill_project(
         self,
         skill_service: SkillService,
         mock_skill: Skill,
         mock_harness: Harness,
         mock_project: Project,
-        skill_source_dir: Path,  # noqa: ARG001
+        skill_source_dir: Path,
         tmp_path: Path,
     ) -> None:
         """Test installing a skill to a project."""
@@ -405,12 +405,12 @@ class TestSkillService:
                 project_id=999,
             )
 
-    async def test_install_skill_update_existing(  # noqa: ARG002
+    async def test_install_skill_update_existing(
         self,
         skill_service: SkillService,
         mock_skill: Skill,
         mock_harness: Harness,
-        skill_source_dir: Path,  # noqa: ARG001
+        skill_source_dir: Path,
         tmp_path: Path,
     ) -> None:
         """Test that installing over an existing skill updates it."""
