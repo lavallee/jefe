@@ -2614,3 +2614,51 @@ Implemented syntax translation logic for converting between harness configuratio
 #### Files Modified
 
 - pyproject.toml (added tomli-w dependency, mypy override)
+
+## sc-044: Translation service (2026-01-13)
+
+Created TranslationService that wraps the syntax translator with audit logging.
+
+### Implementation
+- Created `/src/jefe/server/services/translation/service.py` with:
+  - `TranslationService` class that takes AsyncSession for database access
+  - `TranslationResult` dataclass holding output, diff, and log_id
+  - `translate()` method that validates harnesses, calls syntax translator, generates diff, creates TranslationLog
+  - `get_history()` method with filtering by project_id, translation_type, and pagination
+  - `apply_translation()` method to write translated content to files with directory creation
+  - `_validate_harness()` helper for harness name validation
+  - `_generate_diff()` helper using difflib.unified_diff for change visualization
+
+### Test Coverage
+- Created comprehensive test suite with 19 tests in `/tests/server/test_translation_service.py`:
+  - Basic translation between harnesses with logging
+  - Translation with project association
+  - Settings file translation (JSON to TOML)
+  - Same-harness translation (returns unchanged)
+  - Invalid harness validation (source and target)
+  - Invalid JSON settings error handling
+  - History retrieval (all, paginated, by project, by type)
+  - File writing (basic, directory creation, overwriting, error handling)
+  - Diff generation verification
+  - Model name recording in logs
+  - Content integrity preservation
+  - Sequential translations
+
+### Patterns Observed
+- Service layer pattern: Take AsyncSession, initialize repositories in __init__
+- Repository pattern: Use TranslationLogRepository for all database access
+- Result objects: Return custom result classes (TranslationResult) instead of tuples
+- Diff generation: Use difflib.unified_diff with fromfile/tofile labels for clarity
+- Error handling: Catch specific errors, wrap in service-level TranslationError
+- Test fixtures: Use pytest fixtures for session, service, and test data setup
+- Mock-free testing: Use real database (SQLite in memory) for integration testing
+
+### Key Learnings
+- TranslationLog model tracks input_text, output_text, translation_type (SYNTAX/SEMANTIC), model_name, and optional project_id
+- Model name format: "{source_harness}-to-{target_harness}" for tracking translation pairs
+- Harness validation supports aliases (claude-code, claude_code, claudecode all valid)
+- apply_translation() creates parent directories automatically with mkdir(parents=True, exist_ok=True)
+- difflib.unified_diff needs keepends=True on splitlines() for proper formatting
+- All 350 tests pass, including new translation service tests
+- Service achieves 96% code coverage (only exception branches uncovered)
+
