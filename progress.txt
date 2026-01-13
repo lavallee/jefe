@@ -1175,3 +1175,56 @@ The Sources API is now fully implemented and ready for use.
 - Linting: ✓ (ruff)
 - Code coverage: 78% overall
 
+
+## Session: 2026-01-13 - sc-024: Sources CLI commands
+
+### What Was Done
+- Implemented complete CLI commands for skill source management
+- Created sources.py with list, add, sync, and remove commands
+- Added comprehensive test coverage with 13 tests covering all scenarios
+- Registered sources commands in main CLI app
+- All acceptance criteria met with 85% code coverage on sources.py
+
+### Key Technical Decisions
+1. **Rich Table Display**: Used Rich library for formatted tables with color-coded status (green=synced, red=error, yellow=syncing)
+2. **Name or ID Resolution**: Followed existing pattern from projects.py for resolving source by name or numeric ID
+3. **Batch Sync Support**: `sc sources sync` without arguments syncs all sources with individual progress reporting
+4. **Error Handling**: Sync continues on failures, reports all failed sources at the end
+
+### Patterns Learned
+- CLI command structure: Typer app → anyio.run() → async functions with create_client()
+- Helper functions: _require_api_key(), _request(), _fail_request(), _resolve_source_id()
+- Rich formatting: Tables with color markup [green], [red], [cyan] for visual feedback
+- Test pattern: httpx.MockTransport with handler functions for mocking API responses
+
+### Implementation Highlights
+1. **sc sources list**: Displays sources in table with sync status and last synced timestamp
+2. **sc sources add <name> <url>**: Creates git source with optional description
+3. **sc sources sync [name]**: Syncs specific source or all sources with progress indicators
+4. **sc sources remove <name>**: Removes source by name or ID
+
+### Files Created
+- src/jefe/cli/commands/sources.py - CLI command implementations (137 lines)
+- tests/cli/test_sources.py - Comprehensive test suite (13 tests)
+
+### Files Modified
+- src/jefe/cli/app.py - Registered sources_app subcommand
+
+### Test Results
+- All 165 tests pass (13 new sources CLI tests)
+- Type checking: ✓ (mypy - 63 source files)
+- Linting: ✓ (ruff - clean)
+- Code coverage: 78% overall, 85% on sources.py
+
+### Acceptance Criteria Verification
+✅ `sc sources list` shows sources with status
+✅ `sc sources add anthropic-skills https://github.com/anthropics/skills` works
+✅ `sc sources sync` triggers sync with progress reporting
+✅ `sc sources remove` works by name or ID
+✅ Tests pass (13/13 tests passing)
+
+### Integration Notes
+- Sources API backend was already implemented (sc-022)
+- CLI commands call existing /api/sources endpoints
+- Follows established patterns from projects and harnesses commands
+- Authentication via X-API-Key header (requires `sc config set api_key <key>`)
