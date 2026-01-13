@@ -3547,3 +3547,47 @@ All checks pass:
 - mypy: 88 source files with no issues
 - pytest: 308 tests passed (excluding server tests)
 - ruff: All checks passed
+
+## Task sc-056: Bundle model and API (2026-01-13)
+
+### Implementation Summary
+Successfully created a complete bundle model and API system for managing skill bundles/profiles:
+
+1. **Data Layer**:
+   - Created `Bundle` model with JSON storage for skill references
+   - Each skill ref contains `source` (name) and `name` (skill name)
+   - Implemented helper methods for JSON serialization/deserialization
+   - Created Alembic migration for bundles table
+
+2. **Repository Layer**:
+   - Implemented `BundleRepository` following existing patterns
+   - Added `get_by_name()` for bundle lookup
+
+3. **Service Layer**:
+   - Created `BundleService` with full CRUD operations
+   - Implemented `apply_bundle()` to install all skills in a bundle
+   - Returns `BundleApplyResult` TypedDict with success/failed counts and errors
+   - Handles partial failures gracefully (continues installing even if some fail)
+   - Uses complexity noqa for apply_bundle due to error handling logic
+
+4. **API Layer**:
+   - Created `/api/bundles` endpoints: GET (list), POST (create), GET /{id}, POST /{id}/apply
+   - Properly typed with Pydantic schemas
+   - Follows existing API patterns
+
+5. **Testing**:
+   - Created comprehensive test coverage for bundle API
+   - All tests passing, including full suite
+
+### Key Patterns Learned
+- TypedDict is preferred over `dict[str, object]` for service return types to enable proper mypy checking
+- Use `# noqa: C901` for legitimately complex functions with good error handling
+- JSON storage pattern: store as Text, provide get_X_list/set_X_list helper methods
+- Service layer handles business logic and error aggregation
+- API layer remains thin, just translating between HTTP and service calls
+
+### Technical Details
+- Migration revision: 81f553b4121d
+- Bundle model includes: name (unique), display_name, description, skill_refs (JSON)
+- BundleApplyResult includes: success (int), failed (int), errors (list[str])
+- Apply operation is fault-tolerant, continues on individual skill failures
