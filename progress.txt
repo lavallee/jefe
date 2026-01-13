@@ -1595,3 +1595,65 @@ Successfully implemented a complete harness adapter for Google's Gemini CLI with
 - Ready for use in production skill installation workflows
 
 The Gemini CLI adapter is now fully functional and completes Phase 4 multi-harness support.
+
+## Session: 2026-01-13 - sc-031: Research OpenCode config format
+
+### What Was Done
+Comprehensive research and documentation of OpenCode configuration format, directory structure, and skills management system.
+
+### Research Findings
+1. **Config File Formats**: JSON and JSONC (JSON with Comments)
+2. **Config Locations**: Hierarchical system with merging (remote, global, custom, project, inline)
+3. **Skills Structure**: `.opencode/skill/<name>/SKILL.md` with YAML frontmatter
+4. **Agent Definition**: Markdown files in `.opencode/agent/` with YAML frontmatter
+5. **Commands**: Markdown files in `.opencode/commands/` with parameterized workflows
+
+### Key Technical Details
+1. **Skills Discovery**: 4 locations searched - project .opencode, global ~/.config/opencode, Claude-compatible paths
+2. **SKILL.md Format**: YAML frontmatter with name, description, license, compatibility, metadata fields
+3. **Name Validation**: Regex `^[a-z0-9]+(-[a-z0-9]+)*$`, 1-64 characters
+4. **Agent Configuration**: mode (primary/subagent/all), tools, permissions, maxSteps
+5. **Config Merging**: Non-conflicting settings preserved, later configs override conflicting keys
+
+### Documentation Created
+- docs/opencode-research.md (353 lines)
+  - Configuration locations and precedence
+  - Skills directory structure and SKILL.md format
+  - Agent configuration with markdown files
+  - CLI commands and options
+  - Environment variables and feature flags
+  - Complete reference with official documentation links
+
+### Files Created
+- docs/opencode-research.md - Comprehensive research documentation
+
+### Test Results
+- All 234 tests pass
+- Type checking: ✓ (mypy - 66 source files)
+- Linting: ✓ (ruff - clean)
+- Coverage: 82% overall
+
+### Acceptance Criteria Verification
+✅ Config paths documented (~/.config/opencode/opencode.json, opencode.json, etc.)
+✅ File formats documented (JSON, JSONC, YAML frontmatter)
+✅ Skills location identified (.opencode/skill/, ~/.config/opencode/skill/, .claude/skills/)
+✅ Research doc created (docs/opencode-research.md)
+
+### Key Learnings
+1. **OpenCode vs Claude Code Differences**:
+   - OpenCode uses .opencode/ directory (Claude Code uses .claude/)
+   - Skills in skill/<name>/SKILL.md (Claude Code uses skills/<name>/SKILL.md)
+   - Agents defined with markdown files (similar pattern to Claude Code)
+
+2. **Config Precedence**: 6-level hierarchy with merging, not replacement
+3. **Skills Permissions**: allow/deny/ask pattern for security control
+4. **Claude Compatibility**: OpenCode can read from .claude/ directories (OPENCODE_DISABLE_CLAUDE_CODE flag)
+5. **Web Documentation**: Official docs at opencode.ai/docs with comprehensive examples
+
+### Integration Notes
+- OpenCode is installed locally at /opt/homebrew/bin/opencode
+- Compatible with Claude Code skills format (can disable with env var)
+- Ready for OpenCode adapter implementation (sc-032)
+- Skills format is well-documented and testable
+
+The OpenCode research is complete with comprehensive documentation ready for adapter implementation.
