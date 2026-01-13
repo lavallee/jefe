@@ -9,6 +9,13 @@ from jefe.server.schemas.bundle import (
 )
 from jefe.server.schemas.common import ErrorResponse, HealthResponse, MessageResponse
 from jefe.server.schemas.harness import HarnessConfigResponse, HarnessResponse
+from jefe.server.schemas.knowledge import (
+    KnowledgeEntryCreate,
+    KnowledgeEntryDetailResponse,
+    KnowledgeEntryResponse,
+    KnowledgeIngestRequest,
+    KnowledgeSearchRequest,
+)
 from jefe.server.schemas.projects import (
     ManifestationCreate,
     ManifestationResponse,
@@ -44,6 +51,11 @@ __all__ = [
     "HarnessResponse",
     "HealthResponse",
     "InstalledSkillResponse",
+    "KnowledgeEntryCreate",
+    "KnowledgeEntryDetailResponse",
+    "KnowledgeEntryResponse",
+    "KnowledgeIngestRequest",
+    "KnowledgeSearchRequest",
     "ManifestationCreate",
     "ManifestationResponse",
     "MessageResponse",

@@ -5,6 +5,7 @@ from jefe.data.models.bundle import Bundle
 from jefe.data.models.harness import Harness
 from jefe.data.models.harness_config import ConfigScope, HarnessConfig
 from jefe.data.models.installed_skill import InstalledSkill, InstallScope
+from jefe.data.models.knowledge import KnowledgeEntry
 from jefe.data.models.manifestation import Manifestation, ManifestationType
 from jefe.data.models.project import Project
 from jefe.data.models.skill import Skill
@@ -19,6 +20,7 @@ __all__ = [
     "HarnessConfig",
     "InstallScope",
     "InstalledSkill",
+    "KnowledgeEntry",
     "Manifestation",
     "ManifestationType",
     "Project",
