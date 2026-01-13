@@ -102,7 +102,9 @@ def create_app() -> FastAPI:
 
     # Import and register routers
     from jefe.server.api import api_router
+    from jefe.web import web_router
 
     app.include_router(api_router)
+    app.include_router(web_router)
 
     return app
