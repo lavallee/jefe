@@ -3481,3 +3481,69 @@ All checks pass:
 - mypy: 88 source files with no issues
 - pytest: 496 tests passed
 - ruff: All checks passed
+
+## Session 13 (2026-01-13)
+
+### Epic: sc-E07 - Offline & Sync
+
+Implemented comprehensive offline-first functionality for the CLI, enabling it to work without server connectivity and sync when available.
+
+#### Implementation Summary
+
+1. **Cache Models for Sources and Harnesses** (`src/jefe/cli/cache/models.py`)
+   - Added `CachedSource` model with fields: name, source_type, url, description, sync_status, last_synced_at
+   - Added `CachedHarness` model with fields: name, display_name, version
+   - Both extend SyncMixin for dirty tracking (dirty, last_synced, server_id)
+
+2. **Repository Classes** (`src/jefe/cli/cache/repositories.py`)
+   - `SourceRepository`: get_by_name(), get_by_url() methods
+   - `HarnessRepository`: get_by_name() method
+   - Both extend CacheRepository for TTL-based caching and dirty tracking
+
+3. **CacheManager Extensions** (`src/jefe/cli/cache/manager.py`)
+   - `cache_source()`: Cache source from server response
+   - `cache_harness()`: Cache harness from server response
+   - `create_project_offline()`: Create project locally for later sync
+   - `create_source_offline()`: Create source locally for later sync
+   - `get_all_dirty_items_extended()`: Include sources and harnesses in dirty items
+
+4. **Offline-First CLI Commands**
+   - `projects add`: Creates locally when offline, syncs later
+   - `sources add`: Creates locally when offline, syncs later
+   - `sources list`: Falls back to cached data when offline
+   - `harnesses list`: Falls back to cached data when offline
+   - All commands cache server responses for future offline use
+
+5. **Selective Entity Type Sync** (`src/jefe/cli/commands/sync.py`)
+   - Added `--entity/-e` flag to `jefe sync push` and `jefe sync pull`
+   - Valid types: projects, skills, installed_skills, harness_configs, sources, harnesses
+   - Allows syncing only specific entity types
+
+6. **Improved Conflict Resolution UI**
+   - Enhanced `_show_conflict_details()` with unified diff display
+   - Uses Python's difflib for generating unified diffs
+   - Color-coded diff output (red for removals, green for additions)
+   - Shows both unified diff panel and field-by-field comparison
+
+#### Key Code Changes
+
+- `src/jefe/cli/cache/models.py`: +52 lines (CachedSource, CachedHarness)
+- `src/jefe/cli/cache/repositories.py`: +54 lines (SourceRepository, HarnessRepository)
+- `src/jefe/cli/cache/manager.py`: +231 lines (source/harness methods, offline creation)
+- `src/jefe/cli/commands/sync.py`: +42 lines (selective sync, unified diff)
+- `src/jefe/cli/sync/protocol.py`: +20 lines (entity_types filtering)
+
+#### Test Updates
+
+Updated tests to mock `is_online()` for commands that now check connectivity:
+- `tests/cli/test_harnesses.py`: Added mock_is_online_true
+- `tests/cli/test_projects.py`: Added is_online mock to add commands
+- `tests/cli/test_sources.py`: Added is_online mock to list/add commands
+- `tests/cli/test_conflict_commands.py`: Updated assertion for new UI
+
+#### Feedback Loop Results
+
+All checks pass:
+- mypy: 88 source files with no issues
+- pytest: 308 tests passed (excluding server tests)
+- ruff: All checks passed
