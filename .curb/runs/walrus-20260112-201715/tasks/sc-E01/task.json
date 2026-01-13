@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-E01",
+  "title": "Foundation",
+  "priority": "P0",
+  "status": "completed",
+  "started_at": "2026-01-13T01:17:17Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T01:20:34Z",
+  "exit_code": 0
+}
