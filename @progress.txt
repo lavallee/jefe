@@ -267,3 +267,80 @@ Created comprehensive research doc at `docs/gemini-cli-research.md` covering:
 - Skills and MCP integration patterns
 - CLI commands and flags reference
 
+## Session: sc-040 - Navigation and layout polish (2026-01-13)
+
+### Summary
+Successfully implemented comprehensive navigation and layout improvements for the Jefe web UI with sidebar navigation, active page highlighting, responsive design, and polished styling.
+
+### Implementation Details
+
+1. **Sidebar Navigation** (`src/jefe/web/templates/base.html`)
+   - Converted from top navbar to left sidebar (w-64, dark gray bg-gray-900)
+   - Dark theme with indigo-600 active state
+   - All 5 nav links: Dashboard, Projects, Harnesses, Skills, Sources
+   - Active page detection using `request.url.path` matching
+
+2. **Active Page Highlighting**
+   - Dashboard: Detects `request.url.path == '/'`
+   - Projects: Detects `'/projects' in request.url.path`
+   - Harnesses: Detects `'/harnesses' in request.url.path`
+   - Skills: Detects `'/skills' in request.url.path`
+   - Sources: Detects `'/sources' in request.url.path`
+   - Active state: `bg-indigo-600 text-white`
+   - Hover state: `text-gray-300 hover:bg-gray-800`
+
+3. **Responsive Layout**
+   - Main flex layout: sidebar (fixed) + content area (flex-1)
+   - Content area has top bar with page title
+   - Proper scrolling behavior (overflow-auto on content)
+   - All pages integrated with new layout
+
+4. **Flash Messages** (Styled)
+   - Color-coded by type: success (green), error (red), warning (yellow), info (blue)
+   - Included icons (checkmark, X, warning triangle, info circle)
+   - Consistent padding and border styling
+   - Located in content area under page title
+
+5. **Favicon**
+   - SVG data URI favicon with blue "J" logo
+   - No external files needed
+   - Displays in browser tabs
+
+6. **HTMX Loading Indicators**
+   - CSS spinner animation (@keyframes spin)
+   - htmx-indicator class setup with display toggle
+   - Smooth transitions for element swapping
+
+7. **Page Titles**
+   - Added `{% block page_title %}` to base.html for consistent top bar
+   - Updated all templates: dashboard, projects, harnesses, skills
+   - Dynamic titles in detail pages (project/harness names)
+
+### Files Modified
+- `src/jefe/web/templates/base.html` - Complete redesign with sidebar layout
+- `src/jefe/web/templates/dashboard.html` - Removed duplicate header, added page_title
+- `src/jefe/web/templates/projects/list.html` - Added page_title, removed duplicate header
+- `src/jefe/web/templates/projects/detail.html` - Added page_title
+- `src/jefe/web/templates/harnesses/list.html` - Added page_title, removed duplicate header
+- `src/jefe/web/templates/harnesses/detail.html` - Added page_title
+- `src/jefe/web/templates/skills/browser.html` - Added page_title, removed duplicate header
+
+### Acceptance Criteria Met
+✓ Sidebar navigation works - Implemented with 5 nav links
+✓ Active page highlighted - Dynamic highlighting based on URL path
+✓ Responsive on mobile - Proper flex layout and scrolling
+✓ Consistent styling - All pages use same base layout and card styles
+✓ Loading indicators show - CSS animations for htmx requests
+
+### Validation Results
+- ✓ Tests: 267 tests pass (all pass)
+- ✓ Linting: `ruff check src/jefe` - All checks passed
+- ✓ Type checking: `mypy src/jefe` - No issues found
+
+### Key Learnings
+- Tailwind CSS responsive utilities handle layout without media queries
+- HTMX indicator pattern uses CSS display toggle with htmx class
+- Jinja2 dynamic URL detection in templates for active nav highlighting
+- Flex layouts with fixed sidebar + flex-1 content create responsive UI
+- SVG favicon via data URI eliminates static file dependency
+
