@@ -180,6 +180,52 @@ class SyncProtocol:
         """Clear tracked conflicts."""
         self._conflicts = []
 
+    def _persist_conflict(
+        self, conflict: SyncConflict, local_data: dict[str, Any], server_data: dict[str, Any]
+    ) -> None:
+        """Persist a conflict to the database.
+
+        Args:
+            conflict: The sync conflict to persist
+            local_data: Local entity data as dict
+            server_data: Server entity data as dict
+        """
+        import json
+
+        from jefe.cli.cache.models import (
+            CachedConflict,
+            ConflictEntityType,
+            ConflictResolutionType,
+        )
+
+        # Map protocol enums to cache model enums
+        entity_type_map = {
+            EntityType.PROJECT: ConflictEntityType.PROJECT,
+            EntityType.SKILL: ConflictEntityType.SKILL,
+            EntityType.INSTALLED_SKILL: ConflictEntityType.INSTALLED_SKILL,
+            EntityType.HARNESS_CONFIG: ConflictEntityType.HARNESS_CONFIG,
+        }
+
+        resolution_map = {
+            ConflictResolution.LOCAL_WINS: ConflictResolutionType.LOCAL_WINS,
+            ConflictResolution.SERVER_WINS: ConflictResolutionType.SERVER_WINS,
+        }
+
+        cached_conflict = CachedConflict(
+            entity_type=entity_type_map[conflict.entity_type],
+            local_id=conflict.local_id,
+            server_id=conflict.server_id,
+            local_updated_at=conflict.local_updated_at,
+            server_updated_at=conflict.server_updated_at,
+            resolution=resolution_map.get(
+                conflict.resolution, ConflictResolutionType.UNRESOLVED
+            ),
+            local_data=json.dumps(local_data),
+            server_data=json.dumps(server_data),
+        )
+
+        self._cache.conflicts.add(cached_conflict)
+
     async def sync(self) -> SyncResult:
         """Perform a full sync (push then pull).
 
@@ -514,6 +560,18 @@ class SyncProtocol:
             if local_updated.tzinfo is None:
                 local_updated = local_updated.replace(tzinfo=UTC)
 
+            # Collect entity data for diff
+            local_data = {
+                "name": existing.name,
+                "description": existing.description,
+                "updated_at": existing.updated_at.isoformat() if existing.updated_at else None,
+            }
+            server_data = {
+                "name": data["name"],
+                "description": data.get("description"),
+                "updated_at": data["updated_at"],
+            }
+
             if server_updated > local_updated:
                 # Server wins
                 resolution = ConflictResolution.SERVER_WINS
@@ -522,7 +580,7 @@ class SyncProtocol:
                 # Local wins - don't update
                 resolution = ConflictResolution.LOCAL_WINS
 
-            return SyncConflict(
+            conflict = SyncConflict(
                 entity_type=EntityType.PROJECT,
                 local_id=existing.id,
                 server_id=server_id,
@@ -530,6 +588,11 @@ class SyncProtocol:
                 server_updated_at=server_updated,
                 resolution=resolution,
             )
+
+            # Persist conflict for manual review
+            self._persist_conflict(conflict, local_data, server_data)
+
+            return conflict
         else:
             # No conflict - update or create
             self._cache.cache_project(

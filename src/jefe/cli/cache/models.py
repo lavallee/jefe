@@ -204,3 +204,69 @@ class CachedHarnessConfig(CacheBase, SyncMixin):
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     project_id: Mapped[int | None] = mapped_column(nullable=True)
+
+
+class ConflictResolutionType(str, Enum):
+    """How a conflict was or should be resolved."""
+
+    LOCAL_WINS = "local_wins"
+    SERVER_WINS = "server_wins"
+    UNRESOLVED = "unresolved"
+
+
+class ConflictEntityType(str, Enum):
+    """Types of entities that can have conflicts."""
+
+    PROJECT = "project"
+    SKILL = "skill"
+    INSTALLED_SKILL = "installed_skill"
+    HARNESS_CONFIG = "harness_config"
+
+
+class CachedConflict(CacheBase):
+    """Cached sync conflict for manual resolution."""
+
+    __tablename__ = "cached_conflicts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Conflict details
+    entity_type: Mapped[ConflictEntityType] = mapped_column(
+        SqlEnum(
+            ConflictEntityType,
+            name="conflict_entity_type",
+            values_callable=lambda obj: [item.value for item in obj],
+        ),
+        nullable=False,
+    )
+    local_id: Mapped[int] = mapped_column(nullable=False)
+    server_id: Mapped[int] = mapped_column(nullable=False)
+    local_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    server_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+
+    # Resolution status
+    resolution: Mapped[ConflictResolutionType] = mapped_column(
+        SqlEnum(
+            ConflictResolutionType,
+            name="conflict_resolution_type",
+            values_callable=lambda obj: [item.value for item in obj],
+        ),
+        nullable=False,
+        default=ConflictResolutionType.UNRESOLVED,
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # Store entity data for diff display
+    local_data: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
+    server_data: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON

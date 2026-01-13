@@ -209,6 +209,160 @@ async def _sync_pull_async() -> None:
         protocol.close()
 
 
+@sync_app.command("conflicts")
+def sync_conflicts() -> None:
+    """List pending sync conflicts."""
+    _require_api_key()
+    anyio.run(_sync_conflicts_async)
+
+
+async def _sync_conflicts_async() -> None:
+    """List all unresolved conflicts."""
+    cache = CacheManager()
+    try:
+        conflicts = cache.conflicts.get_unresolved()
+
+        if not conflicts:
+            console.print("[green]No pending conflicts.[/green]")
+            return
+
+        table = Table(title="Pending Conflicts", show_header=True, header_style="bold yellow")
+        table.add_column("ID", style="cyan")
+        table.add_column("Entity Type", style="white")
+        table.add_column("Local ID", style="white")
+        table.add_column("Server ID", style="white")
+        table.add_column("Local Modified", style="dim")
+        table.add_column("Server Modified", style="dim")
+
+        for conflict in conflicts:
+            local_time = conflict.local_updated_at.strftime("%Y-%m-%d %H:%M:%S")
+            server_time = conflict.server_updated_at.strftime("%Y-%m-%d %H:%M:%S")
+            table.add_row(
+                str(conflict.id),
+                conflict.entity_type.value,
+                str(conflict.local_id),
+                str(conflict.server_id),
+                local_time,
+                server_time,
+            )
+
+        console.print(table)
+        console.print(f"\n[yellow]Total conflicts: {len(conflicts)}[/yellow]")
+        console.print("\nUse [cyan]jefe sync resolve <id> --keep-local[/cyan] or")
+        console.print("    [cyan]jefe sync resolve <id> --keep-server[/cyan] to resolve conflicts.")
+    finally:
+        cache.close()
+
+
+@sync_app.command("resolve")
+def sync_resolve(
+    conflict_id: int = typer.Argument(..., help="Conflict ID to resolve"),
+    keep_local: bool = typer.Option(False, "--keep-local", help="Keep local version"),
+    keep_server: bool = typer.Option(False, "--keep-server", help="Keep server version"),
+    interactive: bool = typer.Option(True, "--interactive/--no-interactive", help="Show diff and prompt for choice"),
+) -> None:
+    """Resolve a sync conflict."""
+    _require_api_key()
+
+    if keep_local and keep_server:
+        console.print("[red]Error: Cannot specify both --keep-local and --keep-server.[/red]")
+        raise typer.Exit(code=1)
+
+    anyio.run(_sync_resolve_async, conflict_id, keep_local, keep_server, interactive)
+
+
+def _show_conflict_details(conflict: Any, conflict_id: int) -> None:
+    """Show conflict details and diff."""
+    import json
+
+    console.print(f"\n[bold]Conflict {conflict_id}:[/bold]")
+    console.print(f"Entity Type: {conflict.entity_type.value}")
+    console.print(f"Local ID: {conflict.local_id}")
+    console.print(f"Server ID: {conflict.server_id}")
+    console.print(f"Local Modified: {conflict.local_updated_at.strftime('%Y-%m-%d %H:%M:%S')}")
+    console.print(f"Server Modified: {conflict.server_updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+    # Show diff if we have the data
+    if conflict.local_data and conflict.server_data:
+        local_data = json.loads(conflict.local_data)
+        server_data = json.loads(conflict.server_data)
+
+        console.print("[bold]Differences:[/bold]")
+        for key in set(local_data.keys()) | set(server_data.keys()):
+            local_val = local_data.get(key)
+            server_val = server_data.get(key)
+            if local_val != server_val:
+                console.print(f"  {key}:")
+                console.print(f"    [red]Local:[/red]  {local_val}")
+                console.print(f"    [green]Server:[/green] {server_val}")
+
+        console.print()
+
+
+def _prompt_resolution() -> Any:
+    """Prompt user to choose conflict resolution."""
+    from jefe.cli.cache.models import ConflictResolutionType
+
+    console.print("[yellow]Choose resolution:[/yellow]")
+    console.print("  1. Keep local version")
+    console.print("  2. Keep server version")
+    choice = typer.prompt("Enter choice", type=int)
+
+    if choice == 1:
+        return ConflictResolutionType.LOCAL_WINS
+    elif choice == 2:
+        return ConflictResolutionType.SERVER_WINS
+    else:
+        console.print("[red]Invalid choice.[/red]")
+        raise typer.Exit(code=1)
+
+
+async def _sync_resolve_async(
+    conflict_id: int, keep_local: bool, keep_server: bool, interactive: bool
+) -> None:
+    """Resolve a specific conflict."""
+    from jefe.cli.cache.models import ConflictResolutionType
+
+    cache = CacheManager()
+    try:
+        conflict = cache.conflicts.get_by_id(conflict_id)
+
+        if not conflict:
+            console.print(f"[red]Conflict {conflict_id} not found.[/red]")
+            raise typer.Exit(code=1)
+
+        if conflict.resolution != ConflictResolutionType.UNRESOLVED:
+            console.print(f"[yellow]Conflict {conflict_id} is already resolved as {conflict.resolution.value}.[/yellow]")
+            return
+
+        # Show conflict details and diff
+        _show_conflict_details(conflict, conflict_id)
+
+        # Determine resolution
+        resolution = None
+        if keep_local:
+            resolution = ConflictResolutionType.LOCAL_WINS
+        elif keep_server:
+            resolution = ConflictResolutionType.SERVER_WINS
+        elif interactive:
+            resolution = _prompt_resolution()
+
+        if not resolution:
+            console.print("[red]No resolution specified. Use --keep-local, --keep-server, or run in interactive mode.[/red]")
+            raise typer.Exit(code=1)
+
+        # Apply resolution
+        cache.conflicts.resolve(conflict_id, resolution)
+
+        resolution_text = "local" if resolution == ConflictResolutionType.LOCAL_WINS else "server"
+        console.print(f"[green]✓ Conflict {conflict_id} resolved (keeping {resolution_text} version).[/green]")
+
+        # Note: The actual data sync happens during next pull/push
+        console.print("[dim]Note: Run 'jefe sync' to apply the resolution.[/dim]")
+    finally:
+        cache.close()
+
+
 @sync_app.callback(invoke_without_command=True)
 def sync(ctx: typer.Context) -> None:
     """Perform full bidirectional sync (push then pull)."""

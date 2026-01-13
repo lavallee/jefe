@@ -14,6 +14,7 @@ from jefe.cli.cache.models import (
     InstallScope,
 )
 from jefe.cli.cache.repositories import (
+    ConflictRepository,
     HarnessConfigRepository,
     InstalledSkillRepository,
     ProjectRepository,
@@ -38,6 +39,7 @@ class CacheManager:
         self.skills = SkillRepository(ttl_seconds)
         self.installed_skills = InstalledSkillRepository(ttl_seconds)
         self.harness_configs = HarnessConfigRepository(ttl_seconds)
+        self.conflicts = ConflictRepository()
         self.ttl_seconds = ttl_seconds
 
     def close(self) -> None:
@@ -46,6 +48,7 @@ class CacheManager:
         self.skills.close()
         self.installed_skills.close()
         self.harness_configs.close()
+        self.conflicts.close()
 
     # Project operations
     def cache_project(

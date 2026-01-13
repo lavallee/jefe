@@ -10,11 +10,13 @@ from sqlalchemy.orm import Session
 
 from jefe.cli.cache.database import get_cache_session, init_cache_db
 from jefe.cli.cache.models import (
+    CachedConflict,
     CachedHarnessConfig,
     CachedInstalledSkill,
     CachedProject,
     CachedSkill,
     ConfigScope,
+    ConflictResolutionType,
     InstallScope,
     SyncMixin,
 )
@@ -321,3 +323,123 @@ class HarnessConfigRepository(CacheRepository[CachedHarnessConfig]):
         session = self._get_session()
         stmt = select(CachedHarnessConfig).where(CachedHarnessConfig.path == path)
         return session.execute(stmt).scalar_one_or_none()
+
+
+class ConflictRepository:
+    """Repository for sync conflicts."""
+
+    def __init__(self) -> None:
+        """Initialize the conflict repository."""
+        self._session: Session | None = None
+
+    def _get_session(self) -> Session:
+        """Get or create a database session."""
+        if self._session is None:
+            init_cache_db()
+            self._session = get_cache_session()
+        return self._session
+
+    def close(self) -> None:
+        """Close the database session."""
+        if self._session:
+            self._session.close()
+            self._session = None
+
+    def get_by_id(self, conflict_id: int) -> CachedConflict | None:
+        """Get a conflict by ID.
+
+        Args:
+            conflict_id: The conflict ID to look up
+
+        Returns:
+            The conflict or None if not found
+        """
+        session = self._get_session()
+        stmt = select(CachedConflict).where(CachedConflict.id == conflict_id)
+        return session.execute(stmt).scalar_one_or_none()
+
+    def get_unresolved(self) -> list[CachedConflict]:
+        """Get all unresolved conflicts.
+
+        Returns:
+            List of all unresolved conflicts
+        """
+        session = self._get_session()
+        stmt = select(CachedConflict).where(
+            CachedConflict.resolution == ConflictResolutionType.UNRESOLVED
+        )
+        return list(session.execute(stmt).scalars().all())
+
+    def get_all(self) -> list[CachedConflict]:
+        """Get all conflicts.
+
+        Returns:
+            List of all conflicts
+        """
+        session = self._get_session()
+        stmt = select(CachedConflict)
+        return list(session.execute(stmt).scalars().all())
+
+    def add(self, conflict: CachedConflict) -> None:
+        """Add a new conflict.
+
+        Args:
+            conflict: The conflict to add
+        """
+        session = self._get_session()
+        session.add(conflict)
+        session.commit()
+
+    def resolve(
+        self, conflict_id: int, resolution: ConflictResolutionType
+    ) -> CachedConflict | None:
+        """Resolve a conflict.
+
+        Args:
+            conflict_id: The conflict ID to resolve
+            resolution: The resolution to apply
+
+        Returns:
+            The resolved conflict or None if not found
+        """
+        conflict = self.get_by_id(conflict_id)
+        if conflict:
+            conflict.resolution = resolution
+            conflict.resolved_at = datetime.now(UTC)
+            session = self._get_session()
+            session.add(conflict)
+            session.commit()
+        return conflict
+
+    def delete(self, conflict_id: int) -> bool:
+        """Delete a conflict.
+
+        Args:
+            conflict_id: The conflict ID to delete
+
+        Returns:
+            True if deleted, False if not found
+        """
+        conflict = self.get_by_id(conflict_id)
+        if conflict:
+            session = self._get_session()
+            session.delete(conflict)
+            session.commit()
+            return True
+        return False
+
+    def clear_resolved(self) -> int:
+        """Clear all resolved conflicts.
+
+        Returns:
+            Number of conflicts cleared
+        """
+        session = self._get_session()
+        stmt = select(CachedConflict).where(
+            CachedConflict.resolution != ConflictResolutionType.UNRESOLVED
+        )
+        resolved = list(session.execute(stmt).scalars().all())
+        for conflict in resolved:
+            session.delete(conflict)
+        session.commit()
+        return len(resolved)
