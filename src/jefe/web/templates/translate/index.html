@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}Translation - Jefe{% endblock %}
+
+{% block page_title %}Translation{% endblock %}
+
+{% block extra_head %}
+<!-- Highlight.js for syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/toml.min.js"></script>
+<style>
+    .tab-button {
+        @apply px-4 py-2 text-sm font-medium text-gray-700 bg-white border-b-2 border-transparent hover:text-gray-900 hover:border-gray-300;
+    }
+    .tab-button.active {
+        @apply text-indigo-600 border-indigo-600;
+    }
+    .diff-addition {
+        @apply bg-green-50 border-l-4 border-green-500;
+    }
+    .diff-deletion {
+        @apply bg-red-50 border-l-4 border-red-500;
+    }
+    .diff-context {
+        @apply bg-gray-50;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Translation</h1>
+        <p class="mt-2 text-sm text-gray-600">
+            Translate configurations between different AI coding assistant formats.
+        </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+            <button onclick="switchTab('translate')" id="tab-translate" class="tab-button active">
+                <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+                Translate
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="tab-button">
+                <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                History
+            </button>
+        </nav>
+    </div>
+
+    <!-- Translate Tab -->
+    <div id="content-translate" class="space-y-6">
+        <!-- Translation Form -->
+        <div class="bg-white shadow rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Translate Content</h2>
+            </div>
+            <form id="translate-form" class="px-6 py-4 space-y-4">
+                <!-- Harness Selection -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="source_harness" class="block text-sm font-medium text-gray-700 mb-2">
+                            Source Harness
+                        </label>
+                        <select id="source_harness" name="source_harness" required
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select source harness...</option>
+                            <option value="claude-code">Claude Code</option>
+                            <option value="codex_cli">Codex CLI</option>
+                            <option value="opencode">OpenCode</option>
+                            <option value="gemini_cli">Gemini CLI</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="target_harness" class="block text-sm font-medium text-gray-700 mb-2">
+                            Target Harness
+                        </label>
+                        <select id="target_harness" name="target_harness" required
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select target harness...</option>
+                            <option value="claude-code">Claude Code</option>
+                            <option value="codex_cli">Codex CLI</option>
+                            <option value="opencode">OpenCode</option>
+                            <option value="gemini_cli">Gemini CLI</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Config Kind -->
+                <div>
+                    <label for="config_kind" class="block text-sm font-medium text-gray-700 mb-2">
+                        Configuration Type
+                    </label>
+                    <select id="config_kind" name="config_kind" required
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="instructions">Instructions (Markdown)</option>
+                        <option value="settings">Settings (JSON/TOML)</option>
+                    </select>
+                </div>
+
+                <!-- Content Input -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="content" class="block text-sm font-medium text-gray-700">
+                            Content
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer text-sm text-indigo-600 hover:text-indigo-900">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            Upload file
+                            <input type="file" id="file-upload" accept=".md,.json,.toml,.txt" class="hidden" onchange="handleFileUpload(event)">
+                        </label>
+                    </div>
+                    <textarea id="content" name="content" rows="12" required
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                        placeholder="Paste your configuration content here or upload a file..."></textarea>
+                </div>
+
+                <!-- Project Selection (Optional) -->
+                <div>
+                    <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Project (Optional)
+                    </label>
+                    <select id="project_id" name="project_id"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">None</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="clearForm()"
+                        class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Clear
+                    </button>
+                    <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg id="translate-spinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Translate
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Translation Result -->
+        <div id="result-container" class="hidden space-y-6">
+            <!-- Diff View -->
+            <div class="bg-white shadow rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Changes</h2>
+                </div>
+                <div id="diff-content" class="p-6">
+                    <!-- Diff will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Translated Output -->
+            <div class="bg-white shadow rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Translated Output</h2>
+                    <button onclick="copyOutput()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <pre class="p-4 text-sm"><code id="output-content" class="language-markdown"></code></pre>
+                </div>
+            </div>
+
+            <!-- Apply Section -->
+            <div class="bg-white shadow rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Apply Translation</h2>
+                </div>
+                <form id="apply-form" class="px-6 py-4 space-y-4">
+                    <div>
+                        <label for="file_path" class="block text-sm font-medium text-gray-700 mb-2">
+                            File Path
+                        </label>
+                        <input type="text" id="file_path" name="file_path" required
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="/path/to/output/file">
+                    </div>
+                    <div class="flex items-center justify-end">
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Apply to File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="content-history" class="hidden">
+        <div class="bg-white shadow rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Translation History</h2>
+            </div>
+            <div id="history-content" class="divide-y divide-gray-200">
+                <!-- History will be loaded here -->
+                <div class="px-6 py-8 text-center text-gray-500">
+                    Click "Load History" to view recent translations.
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200">
+                <button onclick="loadHistory()" id="load-history-btn"
+                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Load History
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentOutput = '';
+let currentLogId = null;
+
+// Tab switching
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+
+    // Update content
+    document.querySelectorAll('[id^="content-"]').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+}
+
+// File upload handler
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('content').value = e.target.result;
+    };
+    reader.readAsText(file);
+}
+
+// Clear form
+function clearForm() {
+    document.getElementById('translate-form').reset();
+    document.getElementById('result-container').classList.add('hidden');
+    currentOutput = '';
+    currentLogId = null;
+}
+
+// Copy output
+function copyOutput() {
+    navigator.clipboard.writeText(currentOutput).then(() => {
+        alert('Output copied to clipboard!');
+    });
+}
+
+// Form submission
+document.getElementById('translate-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {
+        content: formData.get('content'),
+        source_harness: formData.get('source_harness'),
+        target_harness: formData.get('target_harness'),
+        config_kind: formData.get('config_kind'),
+        project_id: formData.get('project_id') ? parseInt(formData.get('project_id')) : null
+    };
+
+    const spinner = document.getElementById('translate-spinner');
+    spinner.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/translate/api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Translation failed');
+        }
+
+        const result = await response.json();
+        currentOutput = result.output;
+        currentLogId = result.log_id;
+
+        // Show diff
+        document.getElementById('diff-content').innerHTML = result.diff_html;
+
+        // Show output
+        const outputCode = document.getElementById('output-content');
+        outputCode.textContent = result.output;
+        hljs.highlightElement(outputCode);
+
+        // Show result container
+        document.getElementById('result-container').classList.remove('hidden');
+
+        // Scroll to results
+        document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (error) {
+        alert('Translation error: ' + error.message);
+    } finally {
+        spinner.classList.add('hidden');
+    }
+});
+
+// Apply form submission
+document.getElementById('apply-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {
+        file_path: formData.get('file_path'),
+        content: currentOutput
+    };
+
+    try {
+        const response = await fetch('/translate/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Apply failed');
+        }
+
+        const result = await response.json();
+        alert(result.message);
+
+    } catch (error) {
+        alert('Apply error: ' + error.message);
+    }
+});
+
+// Load history
+async function loadHistory() {
+    const btn = document.getElementById('load-history-btn');
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+
+    try {
+        const response = await fetch('/translate/history');
+        if (!response.ok) {
+            throw new Error('Failed to load history');
+        }
+
+        const history = await response.json();
+        const container = document.getElementById('history-content');
+
+        if (history.length === 0) {
+            container.innerHTML = '<div class="px-6 py-8 text-center text-gray-500">No translation history found.</div>';
+            return;
+        }
+
+        container.innerHTML = history.map((log, index) => `
+            <div class="px-6 py-4 hover:bg-gray-50">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                ${log.translation_type}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                ${new Date(log.created_at).toLocaleString()}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-2">
+                            ${log.model_name}
+                        </p>
+                        <button onclick="toggleHistory(${index})" class="text-sm text-indigo-600 hover:text-indigo-900">
+                            <span id="history-toggle-${index}">Show details ▼</span>
+                        </button>
+                        <div id="history-content-${index}" class="hidden mt-3 space-y-3">
+                            <div>
+                                <h4 class="text-xs font-semibold text-gray-700 mb-1">Input:</h4>
+                                <pre class="p-2 bg-gray-100 rounded text-xs overflow-x-auto">${escapeHtml(log.input_text)}</pre>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-semibold text-gray-700 mb-1">Output:</h4>
+                                <pre class="p-2 bg-gray-100 rounded text-xs overflow-x-auto">${escapeHtml(log.output_text)}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        alert('Failed to load history: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Refresh History';
+    }
+}
+
+function toggleHistory(index) {
+    const content = document.getElementById(`history-content-${index}`);
+    const toggle = document.getElementById(`history-toggle-${index}`);
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        toggle.textContent = 'Hide details ▲';
+    } else {
+        content.classList.add('hidden');
+        toggle.textContent = 'Show details ▼';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize syntax highlighting
+document.addEventListener('DOMContentLoaded', () => {
+    hljs.highlightAll();
+});
+</script>
+{% endblock %}

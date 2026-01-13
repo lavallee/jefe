@@ -4,8 +4,9 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -25,6 +26,8 @@ from jefe.data.repositories.skill import SkillRepository
 from jefe.data.repositories.skill_source import SkillSourceRepository
 from jefe.server.services.discovery import discover_all, discover_for_harness
 from jefe.server.services.skill import SkillInstallError, SkillService
+from jefe.server.services.translation.service import TranslationService
+from jefe.server.services.translation.syntax import TranslationError
 
 # Get the directory of the current file
 CURRENT_DIR = Path(__file__).parent
@@ -826,3 +829,225 @@ async def sources(request: Request) -> HTMLResponse:
         "index.html",
         {"request": request, "messages": [{"type": "info", "text": "Sources page coming soon!"}]},
     )
+
+
+# Translation routes
+
+
+class TranslateWebRequest(BaseModel):
+    """Translation request from web UI."""
+
+    content: str
+    source_harness: str
+    target_harness: str
+    config_kind: str = "instructions"
+    project_id: int | None = None
+
+
+class ApplyWebRequest(BaseModel):
+    """Apply translation request from web UI."""
+
+    file_path: str
+    content: str
+
+
+def _parse_diff_to_html(diff: str) -> str:
+    """Parse unified diff into HTML for display."""
+    lines = diff.split("\n")
+    html_parts = []
+
+    html_parts.append('<div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">')
+    html_parts.append('<div class="overflow-x-auto">')
+    html_parts.append(
+        '<table class="min-w-full divide-y divide-gray-200 font-mono text-sm">'
+        '<tbody class="bg-white divide-y divide-gray-200">'
+    )
+
+    line_num = 0
+    for line in lines:
+        if line.startswith("@@"):
+            # Section header
+            html_parts.append(
+                f'<tr class="bg-blue-50">'
+                f'<td colspan="3" class="px-3 py-1 text-xs text-blue-700 font-semibold">{line}</td>'
+                f"</tr>"
+            )
+            continue
+
+        if line.startswith("---") or line.startswith("+++"):
+            # File headers
+            continue
+
+        line_num += 1
+        line_class = "diff-context"
+        symbol = " "
+        symbol_class = "text-gray-400"
+        content = line
+
+        if line.startswith("+"):
+            line_class = "diff-addition"
+            symbol = "+"
+            symbol_class = "text-green-600"
+            content = line[1:]
+        elif line.startswith("-"):
+            line_class = "diff-deletion"
+            symbol = "-"
+            symbol_class = "text-red-600"
+            content = line[1:]
+
+        # Escape HTML
+        content = content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+        html_parts.append(
+            f'<tr class="{line_class}">'
+            f'<td class="px-3 py-1 whitespace-nowrap text-xs text-gray-500 select-none w-12 text-right">{line_num}</td>'
+            f'<td class="px-3 py-1 whitespace-nowrap text-xs text-gray-500 select-none w-4">'
+            f'<span class="{symbol_class}">{symbol}</span></td>'
+            f'<td class="px-3 py-1 text-xs"><pre class="whitespace-pre-wrap break-all">{content}</pre></td>'
+            f"</tr>"
+        )
+
+    html_parts.append("</tbody></table>")
+    html_parts.append("</div></div>")
+
+    return "".join(html_parts)
+
+
+@web_router.get("/translate", response_class=HTMLResponse)
+async def translate_page(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """
+    Render the translation page.
+
+    Args:
+        request: FastAPI request object
+        session: Database session
+
+    Returns:
+        Rendered HTML response
+    """
+    # Get all projects for the dropdown
+    project_repo = ProjectRepository(session)
+    projects = await project_repo.get_all()
+
+    return templates.TemplateResponse(
+        "translate/index.html",
+        {
+            "request": request,
+            "projects": projects,
+        },
+    )
+
+
+@web_router.post("/translate/api")
+async def translate_api(
+    payload: TranslateWebRequest,
+    session: AsyncSession = Depends(get_session),
+) -> JSONResponse:
+    """
+    Translate content between harness formats (web API endpoint).
+
+    Args:
+        payload: Translation request
+        session: Database session
+
+    Returns:
+        JSON response with translation result
+    """
+    service = TranslationService(session)
+
+    try:
+        result = await service.translate(
+            content=payload.content,
+            source_harness=payload.source_harness,  # type: ignore[arg-type]
+            target_harness=payload.target_harness,  # type: ignore[arg-type]
+            config_kind=payload.config_kind,  # type: ignore[arg-type]
+            project_id=payload.project_id,
+        )
+
+        # Convert diff to HTML
+        diff_html = _parse_diff_to_html(result.diff)
+
+        return JSONResponse(
+            content={
+                "output": result.output,
+                "diff": result.diff,
+                "diff_html": diff_html,
+                "log_id": result.log_id,
+            }
+        )
+
+    except TranslationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation failed: {e}") from e
+
+
+@web_router.post("/translate/apply")
+async def apply_translation(
+    payload: ApplyWebRequest,
+    session: AsyncSession = Depends(get_session),
+) -> JSONResponse:
+    """
+    Apply translated content to a file.
+
+    Args:
+        payload: Apply request
+        session: Database session
+
+    Returns:
+        JSON response with success message
+    """
+    service = TranslationService(session)
+
+    try:
+        file_path = Path(payload.file_path).expanduser()
+        await service.apply_translation(
+            file_path=file_path,
+            content=payload.content,
+        )
+        return JSONResponse(content={"message": f"Translation applied to {file_path}"})
+
+    except TranslationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to apply translation: {e}") from e
+
+
+@web_router.get("/translate/history")
+async def translate_history(
+    session: AsyncSession = Depends(get_session),
+) -> JSONResponse:
+    """
+    Get translation history.
+
+    Args:
+        session: Database session
+
+    Returns:
+        JSON response with translation history
+    """
+    service = TranslationService(session)
+
+    try:
+        logs = await service.get_history(limit=50, offset=0)
+
+        return JSONResponse(
+            content=[
+                {
+                    "id": log.id,
+                    "input_text": log.input_text,
+                    "output_text": log.output_text,
+                    "translation_type": str(log.translation_type.value),
+                    "model_name": log.model_name,
+                    "project_id": log.project_id,
+                    "created_at": log.created_at.isoformat(),
+                }
+                for log in logs
+            ]
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get history: {e}") from e
