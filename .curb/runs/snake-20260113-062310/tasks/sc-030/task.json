@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-030",
+  "title": "Gemini CLI adapter",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T11:32:49Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T11:37:22Z",
+  "exit_code": 0
+}
