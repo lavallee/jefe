@@ -4000,3 +4000,97 @@ POST /api/translate
   "model": "anthropic/claude-3-opus"  # optional
 }
 ```
+
+## Session 13 (2026-01-13)
+
+### Task: sc-063 - KnowledgeEntry model and API
+
+Successfully implemented a complete knowledge base feature for storing and searching best practices.
+
+#### Implementation Summary
+
+Created a full-stack knowledge management system with model, repository, API, and tests:
+
+1. **Data Model** (`src/jefe/data/models/knowledge.py`)
+   - KnowledgeEntry with fields: id, source_url, title, content, summary, tags, embedding, created_at, updated_at
+   - Tags stored as JSON text with helper methods (get_tags_list, set_tags_list)
+   - Embedding field reserved for future vector search (nullable)
+   - Follows project patterns: inherits from BaseModel, uses Mapped types
+
+2. **Repository** (`src/jefe/data/repositories/knowledge.py`)
+   - KnowledgeRepository extending BaseRepository[KnowledgeEntry]
+   - search() method with text query, tag filtering, and pagination
+   - get_by_url() for duplicate URL detection
+   - list_by_tag() for tag-based filtering
+   - Uses SQLite LIKE for JSON tag searching
+
+3. **Database Migration** (`alembic/versions/4f1cce48b53c_add_knowledge_entries.py`)
+   - Creates knowledge_entries table with proper column types
+   - Includes created_at/updated_at with server-side defaults
+   - Migration tested and applied successfully
+
+4. **API Schemas** (`src/jefe/server/schemas/knowledge.py`)
+   - KnowledgeEntryCreate: For direct entry creation
+   - KnowledgeEntryResponse: List response (without full content)
+   - KnowledgeEntryDetailResponse: Detail response (with full content)
+   - KnowledgeIngestRequest: For future URL ingestion feature
+   - KnowledgeSearchRequest: For search parameters
+
+5. **REST API** (`src/jefe/server/api/knowledge.py`)
+   - POST /api/knowledge/ingest - Placeholder (501 Not Implemented)
+   - POST /api/knowledge - Create entry with duplicate URL check
+   - GET /api/knowledge - Search with query, tags, limit, offset
+   - GET /api/knowledge/{id} - Get entry with full content
+   - DELETE /api/knowledge/{id} - Delete entry
+   - Router registered in api/__init__.py with "knowledge" tag
+
+6. **Tests** (`tests/server/test_knowledge_api.py`)
+   - 12 comprehensive tests covering all CRUD operations
+   - Tests for search by text query, tag filtering, multiple tags
+   - Pagination tests with limit/offset
+   - Validation tests (duplicate URLs, invalid limits)
+   - Test for 501 response on ingest endpoint
+   - All tests pass (12/12)
+
+#### Key Patterns Learned
+
+1. **APIKey Dependency**: Use `_api_key: APIKey` not `_api_key: APIKey = Depends()`
+2. **Test URL Uniqueness**: Use global counter to generate unique URLs in test helpers
+3. **JSON Storage**: Store as Text column with helper methods for serialization
+4. **Response Schemas**: Separate list response (summary) from detail response (full content)
+5. **Search Pattern**: Use LIKE with JSON for tag filtering in SQLite
+
+#### Acceptance Criteria Met
+
+- ✅ KnowledgeEntry model created
+- ✅ Can store and query entries
+- ✅ Search by tags works
+- ✅ API works
+- ✅ Tests pass (593/593 total tests including 12 new tests)
+- ✅ Type checking passes (mypy)
+- ✅ Linting passes (ruff)
+
+#### Files Created/Modified
+
+Created:
+- src/jefe/data/models/knowledge.py (47 lines)
+- src/jefe/data/repositories/knowledge.py (79 lines)
+- alembic/versions/4f1cce48b53c_add_knowledge_entries.py (54 lines)
+- src/jefe/server/schemas/knowledge.py (51 lines)
+- src/jefe/server/api/knowledge.py (185 lines)
+- tests/server/test_knowledge_api.py (310 lines)
+
+Modified:
+- src/jefe/data/models/__init__.py (added KnowledgeEntry export)
+- src/jefe/data/repositories/__init__.py (added KnowledgeRepository export)
+- src/jefe/server/schemas/__init__.py (added 5 knowledge schema exports)
+- src/jefe/server/api/__init__.py (added knowledge router)
+
+#### Notes for Future Work
+
+The POST /api/knowledge/ingest endpoint is a placeholder that returns 501. To implement:
+1. Add web scraping to fetch content from URLs
+2. Integrate LLM (OpenRouter) to generate summaries
+3. Extract or generate tags from content
+4. Handle different content types (HTML, PDF, Markdown)
+5. Add rate limiting and error handling for external requests
