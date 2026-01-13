@@ -180,3 +180,54 @@ Validated Phase 2 discovery checkpoint end-to-end with live server + CLI workflo
 ### Notes
 - CLI configured via `python -m jefe.cli.app` with `server_url` and `api_key`.
 - Demo directory with `CLAUDE.md` verified discovery output includes instructions content.
+
+## Session: sc-019 - SkillSource and Skill models (2026-01-12)
+
+### Summary
+Implemented data models and repositories for tracking skill sources (git repos, marketplaces) and individual skills.
+
+### Implementation Details
+1. **SkillSource model** (src/jefe/data/models/skill_source.py)
+   - Fields: name (unique), source_type, url, description, sync_status, last_synced_at
+   - Enums: SourceType (GIT, MARKETPLACE), SyncStatus (PENDING, SYNCING, SYNCED, ERROR)
+   - One-to-many relationship with Skill
+
+2. **Skill model** (src/jefe/data/models/skill.py)
+   - Fields: source_id (FK), name, display_name, description, version, author, tags, metadata_json
+   - JSON helper methods: get_tags_list(), set_tags_list(), get_metadata_dict(), set_metadata_dict()
+   - Many-to-one relationship with SkillSource
+   - Note: Used `metadata_json` instead of `metadata` (reserved by SQLAlchemy)
+
+3. **Alembic migration** (alembic/versions/39153ba35d7c_add_skills_and_skill_sources.py)
+   - Creates skill_sources table with unique name constraint
+   - Creates skills table with CASCADE delete on source_id FK
+   - Proper enum handling for SQLite
+
+4. **Repositories**
+   - SkillSourceRepository: methods for get_by_name, list_by_type, list_by_status, get_with_skills
+   - SkillRepository: methods for list_by_source, list_by_name, search_by_tag, list_by_author, get_with_source
+   - All repositories extend BaseRepository with standard CRUD operations
+
+5. **Tests** (tests/data/test_skill_repo.py)
+   - 18 comprehensive test cases covering all repository methods
+   - Tests for cascade delete, filtering, eager loading, JSON helpers
+   - 100% coverage for skill and skill_source repositories
+
+### Key Learnings
+- **SQLAlchemy reserved names**: `metadata` is a reserved attribute in declarative models, must use alternative names
+- **Type safety with JSON**: Added runtime type checks for JSON parsing to satisfy mypy strict typing
+- **Migration workflow**: Database was out of sync, used `alembic stamp head` to fix before autogenerate
+- **PYTHONPATH requirement**: Alembic needs `PYTHONPATH=src` when running without editable install
+
+### Validation Results
+- ✓ Type checking: `mypy src/jefe` - No errors
+- ✓ Tests: `pytest` - 94 tests pass (18 new skill tests)
+- ✓ Linting: `ruff check src/jefe` - All checks passed
+- ✓ Coverage: 78% overall, 100% for new skill modules
+
+### Next Steps
+Skill models are ready for integration with:
+- Discovery services to fetch skills from sources
+- CLI commands to list/manage skills
+- API endpoints for skill browsing
+- Sync logic to update skill metadata from sources
