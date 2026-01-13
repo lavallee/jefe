@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-044",
+  "title": "Translation service",
+  "priority": "P1",
+  "status": "completed",
+  "started_at": "2026-01-13T13:18:19Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T13:22:35Z",
+  "exit_code": 0
+}
