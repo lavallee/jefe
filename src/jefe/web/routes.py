@@ -11,17 +11,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from jefe.data.database import get_session
-from jefe.data.models.harness_config import HarnessConfig
+from jefe.data.models.harness_config import ConfigScope, HarnessConfig
 from jefe.data.models.installed_skill import InstalledSkill, InstallScope
 from jefe.data.models.manifestation import ManifestationType
 from jefe.data.models.project import Project
 from jefe.data.models.skill import Skill
 from jefe.data.models.skill_source import SkillSource, SyncStatus
 from jefe.data.repositories.harness import HarnessRepository
+from jefe.data.repositories.harness_config import HarnessConfigRepository
 from jefe.data.repositories.manifestation import ManifestationRepository
 from jefe.data.repositories.project import ProjectRepository
 from jefe.data.repositories.skill import SkillRepository
 from jefe.data.repositories.skill_source import SkillSourceRepository
+from jefe.server.services.discovery import discover_all, discover_for_harness
 from jefe.server.services.skill import SkillInstallError, SkillService
 
 # Get the directory of the current file
@@ -665,6 +667,148 @@ async def skills_install(
         response = RedirectResponse(url="/skills", status_code=303)
         response.headers["HX-Redirect"] = "/skills"
         return response
+
+
+@web_router.get("/harnesses", response_class=HTMLResponse)
+async def harnesses_list(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """
+    Render the harnesses list page.
+
+    Args:
+        request: FastAPI request object
+        session: Database session
+
+    Returns:
+        Rendered HTML response with harnesses list
+    """
+    harness_repo = HarnessRepository(session)
+    config_repo = HarnessConfigRepository(session)
+
+    # Fetch all harnesses
+    harnesses = await harness_repo.list_all()
+
+    # Get config counts for each harness
+    harnesses_with_counts = []
+    for harness in harnesses:
+        configs = await config_repo.list_for_harness(harness.id)
+        harnesses_with_counts.append(
+            {
+                "id": harness.id,
+                "name": harness.name,
+                "display_name": harness.display_name,
+                "version": harness.version,
+                "config_count": len(configs),
+            }
+        )
+
+    return templates.TemplateResponse(
+        "harnesses/list.html",
+        {
+            "request": request,
+            "harnesses": harnesses_with_counts,
+        },
+    )
+
+
+@web_router.get("/harnesses/{harness_name}", response_class=HTMLResponse)
+async def harnesses_detail(
+    request: Request,
+    harness_name: str,
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """
+    Render the harness detail page.
+
+    Args:
+        request: FastAPI request object
+        harness_name: Harness name
+        session: Database session
+
+    Returns:
+        Rendered HTML response with harness details
+    """
+    harness_repo = HarnessRepository(session)
+    config_repo = HarnessConfigRepository(session)
+
+    # Fetch harness
+    harness = await harness_repo.get_by_name(harness_name)
+    if not harness:
+        raise HTTPException(status_code=404, detail="Harness not found")
+
+    # Fetch configs for this harness
+    all_configs = await config_repo.list_for_harness(harness.id)
+
+    # Separate global and project configs
+    global_configs = [config for config in all_configs if config.scope == ConfigScope.GLOBAL]
+    project_configs = [config for config in all_configs if config.scope == ConfigScope.PROJECT]
+
+    return templates.TemplateResponse(
+        "harnesses/detail.html",
+        {
+            "request": request,
+            "harness": harness,
+            "global_configs": global_configs,
+            "project_configs": project_configs,
+        },
+    )
+
+
+@web_router.post("/harnesses/discover")
+async def harnesses_discover_all(
+    session: AsyncSession = Depends(get_session),
+) -> RedirectResponse:
+    """
+    Trigger discovery for all harnesses.
+
+    Args:
+        session: Database session
+
+    Returns:
+        Redirect to harnesses list
+    """
+    # Run discovery
+    await discover_all(session)
+    await session.commit()
+
+    # Return redirect response with HX-Redirect header for htmx
+    response = RedirectResponse(url="/harnesses", status_code=303)
+    response.headers["HX-Redirect"] = "/harnesses"
+    return response
+
+
+@web_router.post("/harnesses/{harness_name}/discover")
+async def harnesses_discover_single(
+    harness_name: str,
+    session: AsyncSession = Depends(get_session),
+) -> RedirectResponse:
+    """
+    Trigger discovery for a specific harness.
+
+    Args:
+        harness_name: Harness name
+        session: Database session
+
+    Returns:
+        Redirect to harness detail
+    """
+    harness_repo = HarnessRepository(session)
+
+    # Verify harness exists
+    harness = await harness_repo.get_by_name(harness_name)
+    if not harness:
+        raise HTTPException(status_code=404, detail="Harness not found")
+
+    # Run discovery for this harness
+    await discover_for_harness(session, harness_name)
+    await session.commit()
+
+    # Return redirect response with HX-Redirect header for htmx
+    response = RedirectResponse(url=f"/harnesses/{harness_name}", status_code=303)
+    response.headers["HX-Redirect"] = f"/harnesses/{harness_name}"
+    return response
 
 
 @web_router.get("/sources", response_class=HTMLResponse)
