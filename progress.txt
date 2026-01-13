@@ -3899,3 +3899,104 @@ Implemented `jefe projects init --recipe <path>` command to initialize projects 
 - Tests in tests/server/ mirroring source structure
 - Type checking with mypy in strict mode
 - httpx already used in CLI client (src/jefe/cli/client.py)
+
+## Session 13 (2026-01-13)
+
+### Task: sc-062 - Semantic translation
+
+Implemented LLM-powered semantic translation that adapts prompting style when translating between harness formats.
+
+#### Implementation Summary
+
+1. **Prompts Module** (`src/jefe/server/services/translation/prompts.py`)
+   - Defined harness display names and context for all supported harnesses
+   - Created `build_semantic_translation_prompt()` function for both instructions and settings
+   - Harness context includes file conventions, communication style, and tool-specific patterns
+   - Constants for recommended model (claude-sonnet-4), temperature (0.3), max tokens (4096)
+
+2. **Semantic Translation Module** (`src/jefe/server/services/translation/semantic.py`)
+   - `SemanticTranslationResult` class with output and model_used attributes
+   - `translate_semantic()` async function using OpenRouterClient
+   - Same-harness passthrough optimization
+   - Output cleanup to remove LLM-added markdown code blocks
+   - Proper error propagation with TranslationError
+
+3. **TranslationService Updates** (`src/jefe/server/services/translation/service.py`)
+   - Extended `translate()` method with `translation_type` parameter
+   - Added `api_key` and `model` parameters for semantic translation
+   - `_translate_syntax()` and `_translate_semantic()` helper methods
+   - Logs TranslationType.SEMANTIC with actual model name
+
+4. **API Updates** (`src/jefe/server/api/translation.py`, `schemas/translation.py`)
+   - Added `translation_type` field to TranslateRequest (default: "syntax")
+   - Added optional `model` field for custom model override
+   - API passes parameters through to service
+
+5. **CLI Updates** (`src/jefe/cli/commands/translate.py`)
+   - Added `--semantic / -s` flag for LLM translation
+   - Added `--model / -m` option for model override
+   - Updated output to show translation type and model
+
+#### Key Design Decisions
+
+- **Prompt Engineering**: Detailed harness context helps LLM understand source/target conventions
+- **Model Selection**: Default to claude-sonnet-4 for balance of quality and speed
+- **Temperature**: Low (0.3) for more deterministic translations
+- **Error Handling**: All OpenRouter errors wrapped in TranslationError for consistent API
+
+#### Feedback Loop Results
+
+All checks pass:
+- mypy: 101 source files with no issues
+- ruff: All checks passed
+- pytest: 581 tests passed (18 new semantic translation tests)
+
+#### Files Created
+
+- src/jefe/server/services/translation/prompts.py
+- src/jefe/server/services/translation/semantic.py
+- tests/server/test_semantic_translation.py
+
+#### Files Modified
+
+- src/jefe/server/services/translation/__init__.py
+- src/jefe/server/services/translation/service.py
+- src/jefe/server/api/translation.py
+- src/jefe/server/schemas/translation.py
+- src/jefe/cli/commands/translate.py
+
+#### Usage Examples
+
+```bash
+# Syntax translation (default, rule-based)
+sc translate file CLAUDE.md --from claude-code --to codex-cli
+
+# Semantic translation (LLM-powered)
+sc translate file CLAUDE.md --from claude-code --to codex-cli --semantic
+
+# Semantic with custom model
+sc translate file CLAUDE.md --from claude-code --to codex-cli --semantic -m anthropic/claude-3-opus
+```
+
+#### API Usage
+
+```python
+# Syntax translation
+POST /api/translate
+{
+  "content": "...",
+  "source_harness": "claude-code",
+  "target_harness": "codex_cli",
+  "translation_type": "syntax"
+}
+
+# Semantic translation
+POST /api/translate
+{
+  "content": "...",
+  "source_harness": "claude-code",
+  "target_harness": "codex_cli",
+  "translation_type": "semantic",
+  "model": "anthropic/claude-3-opus"  # optional
+}
+```
