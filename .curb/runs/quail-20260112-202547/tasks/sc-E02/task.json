@@ -1,0 +1,10 @@
+{
+  "task_id": "sc-E02",
+  "title": "Core Discovery",
+  "priority": "P0",
+  "status": "completed",
+  "started_at": "2026-01-13T01:25:49Z",
+  "iterations": 1,
+  "completed_at": "2026-01-13T01:46:29Z",
+  "exit_code": 0
+}
