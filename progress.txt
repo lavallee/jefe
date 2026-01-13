@@ -1,5 +1,84 @@
 # Jefe - Development Progress
 
+## Session 9 (2026-01-13)
+
+### Task: sc-052 - Sync protocol
+
+Implemented client-server synchronization protocol with timestamp-based delta sync and last-write-wins conflict resolution.
+
+#### Implementation Summary
+
+1. **CLI Sync Module** (`src/jefe/cli/sync/`)
+   - `protocol.py`: Main sync protocol implementation
+   - `SyncProtocol` class: Coordinates push/pull operations
+   - `SyncClient` class: Async HTTP client for server communication
+   - `SyncConflict` and `SyncResult` dataclasses for results
+
+2. **Server Sync Service** (`src/jefe/server/services/sync.py`)
+   - `SyncService` class handling push/pull requests
+   - Process projects, skills, installed skills, and harness configs
+   - Last-write-wins conflict resolution based on timestamps
+   - Server ID mappings returned for newly created items
+
+3. **Server API Endpoints** (`src/jefe/server/api/sync.py`)
+   - `POST /api/sync/push`: Accept dirty items from client
+   - `POST /api/sync/pull`: Return changes since timestamp
+
+4. **Sync Schemas** (`src/jefe/server/schemas/sync.py`)
+   - `SyncPushRequest/Response` with item lists and conflicts
+   - `SyncPullRequest/Response` with timestamp filtering
+   - Entity-specific schemas for projects, skills, etc.
+
+#### Feedback Loop Results
+
+All checks pass successfully:
+- Type checking: mypy found no issues in 87 source files
+- Linting: ruff found no issues
+- Tests: 469 tests passed (35 new sync tests)
+
+#### Key Implementation Details
+
+1. **Conflict Resolution**
+   - Timestamp-based comparison using `updated_at` fields
+   - Server wins if its timestamp is newer
+   - Local wins if its timestamp is newer
+   - Conflicts tracked and returned for user review
+
+2. **Push Flow**
+   - Collect dirty items from cache
+   - Send to server `/api/sync/push`
+   - Receive server ID mappings for new items
+   - Clear dirty flags on success
+
+3. **Pull Flow**
+   - Send `last_synced` timestamp to server
+   - Receive changed items since that time
+   - Update local cache with server data
+   - Handle conflicts with last-write-wins
+
+#### Files Created
+
+CLI:
+- src/jefe/cli/sync/__init__.py
+- src/jefe/cli/sync/protocol.py
+
+Server:
+- src/jefe/server/api/sync.py
+- src/jefe/server/schemas/sync.py
+- src/jefe/server/services/sync.py
+
+Tests:
+- tests/cli/sync/__init__.py
+- tests/cli/sync/test_protocol.py
+- tests/server/test_sync_api.py
+
+#### Important Notes
+
+- HarnessConfig model is in `harness_config.py`, not `harness.py`
+- JSON serialization converts dict keys to strings (affects server_id_mappings)
+- Timestamp filters may be flaky in fast tests - use past/future dates instead
+- Async context manager mocking requires proper `__aenter__`/`__aexit__` setup
+
 ## Session 8 (2026-01-12)
 
 ### Task: sc-008 - GitHub Actions CI pipeline
